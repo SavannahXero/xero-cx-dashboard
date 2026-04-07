@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xero Shoes — CX Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.js"></script>
+<style>
+:root {
+  --blue: #4CAACE;
+  --blue-dark: #1A5276;
+  --blue-mid: #2E86C1;
+  --blue-light: #D6EEF6;
+  --bg: #0D1117;
+  --bg2: #161B22;
+  --bg3: #1C2128;
+  --border: #2D333B;
+  --text: #E6EDF3;
+  --text-muted: #7D8590;
+  --text-dim: #484F58;
+  --red: #FF6B6B;
+  --red-bg: #2D1515;
+  --amber: #F5A623;
+  --amber-bg: #2D2000;
+  --green: #3FB950;
+  --green-bg: #0D2010;
+  --kudos: #F9E79F;
+  --kudos-bg: #2D2800;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* ── SIDEBAR ── */
+#sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  z-index: 100; transition: transform 0.3s;
+}
+.sidebar-logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .brand { font-size: 13px; font-weight: 600; color: var(--blue); letter-spacing: 0.08em; text-transform: uppercase; }
+.sidebar-logo .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.sidebar-week {
+  margin: 12px 12px 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.sidebar-week strong { color: var(--blue); display: block; font-size: 12px; margin-bottom: 2px; }
+nav { padding: 8px 0; flex: 1; overflow-y: auto; }
+.nav-section { padding: 16px 20px 6px; font-size: 10px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text-muted);
+  transition: all 0.15s; border-left: 2px solid transparent;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(76,170,206,0.08); color: var(--blue); border-left-color: var(--blue); }
+.nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+.sidebar-bottom { padding: 12px; border-top: 1px solid var(--border); }
+.upload-btn {
+  width: 100%; padding: 9px; border-radius: var(--radius);
+  background: var(--blue); color: white; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+}
+.upload-btn:hover { background: var(--blue-mid); }
+
+/* ── MAIN ── */
+#main {
+  margin-left: 220px;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(13,17,23,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex; align-items: center; gap: 16px;
+}
+.topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
+.search-wrap { position: relative; }
+.search-wrap input {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 12px 7px 32px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px;
+  color: var(--text); width: 260px; outline: none;
+  transition: border-color 0.15s;
+}
+.search-wrap input:focus { border-color: var(--blue); }
+.search-wrap input::placeholder { color: var(--text-dim); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 13px; }
+.search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  z-index: 200; max-height: 300px; overflow-y: auto;
+}
+.search-result-item {
+  padding: 10px 14px; cursor: pointer; font-size: 13px;
+  border-bottom: 1px solid var(--border); transition: background 0.1s;
+}
+.search-result-item:hover { background: var(--bg3); }
+.search-result-item .sr-type { font-size: 10px; color: var(--blue); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.content { padding: 24px 28px; flex: 1; }
+
+/* ── CARDS ── */
+.grid { display: grid; gap: 14px; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--blue); }
+.card.red { border-color: var(--red); background: var(--red-bg); }
+.card.amber { border-color: var(--amber); background: var(--amber-bg); }
+.card.green { border-color: var(--green); background: var(--green-bg); }
+.card.kudos { border-color: var(--kudos); background: var(--kudos-bg); }
+.card-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+.card-value { font-size: 28px; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1; }
+.card-value.red { color: var(--red); }
+.card-value.amber { color: var(--amber); }
+.card-value.green { color: var(--green); }
+.card-value.blue { color: var(--blue); }
+.card-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.card-flag { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.card-flag.red { background: rgba(255,107,107,0.15); color: var(--red); }
+.card-flag.amber { background: rgba(245,166,35,0.15); color: var(--amber); }
+.card-flag.green { background: rgba(63,185,80,0.15); color: var(--green); }
+
+/* ── SECTION HEADERS ── */
+.section-title {
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin: 24px 0 12px; display: flex; align-items: center; gap: 8px;
+}
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg3); }
+th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg3); }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge.red { background: rgba(255,107,107,0.15); color: var(--red); }
+.badge.amber { background: rgba(245,166,35,0.15); color: var(--amber); }
+.badge.green { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge.blue { background: rgba(76,170,206,0.15); color: var(--blue); }
+.badge.kudos { background: rgba(249,231,159,0.15); color: var(--kudos); }
+.badge.gray { background: var(--bg3); color: var(--text-muted); }
+
+/* ── AGENT CARD ── */
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.agent-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px;
+  cursor: pointer; transition: all 0.15s;
+}
+.agent-card:hover { border-color: var(--blue); transform: translateY(-1px); }
+.agent-card.red { border-color: var(--red); }
+.agent-card.amber { border-color: rgba(245,166,35,0.4); }
+.agent-card.kudos { border-color: rgba(249,231,159,0.3); }
+.agent-name { font-size: 15px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.agent-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.agent-metric { background: var(--bg3); border-radius: 6px; padding: 8px 10px; }
+.agent-metric-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.agent-metric-value { font-size: 13px; font-weight: 600; margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+/* ── CHART ── */
+.chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+.chart-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+
+/* ── CONCERNS ── */
+.concern-item {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 16px; border-radius: var(--radius);
+  margin-bottom: 8px; border: 1px solid;
+}
+.concern-item.red { background: var(--red-bg); border-color: rgba(255,107,107,0.3); }
+.concern-item.amber { background: var(--amber-bg); border-color: rgba(245,166,35,0.3); }
+.concern-icon { font-size: 18px; flex-shrink: 0; }
+.concern-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.concern-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── KUDOS ── */
+.kudos-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 14px; border-radius: var(--radius);
+  background: var(--kudos-bg); border: 1px solid rgba(249,231,159,0.2);
+  margin-bottom: 8px;
+}
+.kudos-name { font-size: 13px; font-weight: 600; color: var(--kudos); margin-bottom: 2px; }
+.kudos-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── UPLOAD MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px;
+  width: 480px; max-width: 95vw;
+  transform: translateY(20px); transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text); outline: none;
+}
+.form-input:focus { border-color: var(--blue); }
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 28px; text-align: center; cursor: pointer;
+  transition: all 0.15s; margin-bottom: 8px;
+}
+.drop-zone:hover, .drop-zone.dragover { border-color: var(--blue); background: rgba(76,170,206,0.05); }
+.drop-zone-icon { font-size: 28px; margin-bottom: 8px; }
+.drop-zone-text { font-size: 13px; color: var(--text-muted); }
+.drop-zone-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.file-list { margin: 10px 0; }
+.file-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--bg3); border-radius: 6px; margin-bottom: 4px; font-size: 12px; }
+.file-item .fi-name { flex: 1; color: var(--text); }
+.file-item .fi-type { color: var(--blue); font-weight: 600; font-size: 10px; text-transform: uppercase; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn { padding: 9px 18px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: var(--blue); color: white; flex: 1; }
+.btn-primary:hover { background: var(--blue-mid); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ghost { background: var(--bg3); color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+.upload-success { background: var(--green-bg); border: 1px solid rgba(63,185,80,0.3); border-radius: var(--radius); padding: 12px 14px; font-size: 13px; color: var(--green); margin-top: 10px; display: none; }
+.upload-error { background: var(--red-bg); border: 1px solid rgba(255,107,107,0.3); border-radius: var(--radius); padding: 12px 14px; font-size: 13px; color: var(--red); margin-top: 10px; display: none; }
+
+/* ── TREND TABLE ── */
+.trend-flag-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── TABS ── */
+.tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab { padding: 8px 14px; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.tab:hover { color: var(--text); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.empty-desc { font-size: 14px; color: var(--text-muted); max-width: 400px; margin: 0 auto 20px; line-height: 1.6; }
+
+/* ── SPARKLINE ── */
+.sparkline { display: flex; align-items: flex-end; gap: 2px; height: 32px; }
+.spark-bar { flex: 1; border-radius: 2px; min-height: 3px; transition: opacity 0.15s; }
+.spark-bar:hover { opacity: 0.7; }
+
+/* ── AGENT DETAIL ── */
+.agent-detail-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.agent-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer; margin-bottom: 16px; transition: color 0.15s; }
+.back-btn:hover { color: var(--blue); }
+
+/* ── MISC ── */
+.page { display: none; }
+.page.active { display: block; }
+.mono { font-family: 'DM Mono', monospace; }
+.text-muted { color: var(--text-muted); }
+.text-red { color: var(--red); }
+.text-amber { color: var(--amber); }
+.text-green { color: var(--green); }
+.text-blue { color: var(--blue); }
+.mt-4 { margin-top: 16px; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.week-label { background: rgba(76,170,206,0.1); border: 1px solid rgba(76,170,206,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--blue); font-weight: 600; }
+.loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.pulsing { animation: pulse 2s infinite; }
+
+@media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 700px) {
+  #sidebar { transform: translateX(-220px); }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  .grid-4,.grid-3,.grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Xero Shoes</div>
+    <div class="sub">CX Dashboard</div>
+  </div>
+  <div class="sidebar-week" id="sidebarWeek">
+    <strong id="sidebarWeekLabel">No data loaded</strong>
+    <span id="sidebarWeekSub">Upload exports to begin</span>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="showPage('snapshot')" id="nav-snapshot">
+      <span class="icon">📊</span> Weekly Snapshot
+    </div>
+    <div class="nav-item" onclick="showPage('team')" id="nav-team">
+      <span class="icon">👥</span> Team Performance
+    </div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="showPage('ai')" id="nav-ai">
+      <span class="icon">🤖</span> AI & Gorgias
+    </div>
+    <div class="nav-item" onclick="showPage('returns')" id="nav-returns">
+      <span class="icon">📦</span> Returns & Warranties
+    </div>
+    <div class="nav-section">History</div>
+    <div class="nav-item" onclick="showPage('trends')" id="nav-trends">
+      <span class="icon">📈</span> Trends
+    </div>
+    <div class="nav-item" onclick="showPage('raw')" id="nav-raw">
+      <span class="icon">🗂️</span> Raw Data
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="upload-btn" onclick="openUpload()">⬆ Upload New Week</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Weekly Snapshot</h1>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="globalSearch" placeholder="Search agent, product, week..." oninput="handleSearch(this.value)">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <span class="week-label" id="topbarWeek">No data</span>
+  </div>
+  <div class="content">
+
+    <!-- SNAPSHOT PAGE -->
+    <div class="page active" id="page-snapshot">
+      <div id="snapshotContent">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          <div class="empty-title">No data loaded yet</div>
+          <div class="empty-desc">Upload your weekly exports using the button in the sidebar to populate the dashboard.</div>
+          <button class="btn btn-primary" onclick="openUpload()" style="display:inline-block;width:auto">Upload Exports</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAM PAGE -->
+    <div class="page" id="page-team">
+      <div id="teamContent">
+        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No data loaded</div></div>
+      </div>
+    </div>
+
+    <!-- AI PAGE -->
+    <div class="page" id="page-ai">
+      <div id="aiContent">
+        <div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">No data loaded</div></div>
+      </div>
+    </div>
+
+    <!-- RETURNS PAGE -->
+    <div class="page" id="page-returns">
+      <div id="returnsContent">
+        <div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No data loaded</div></div>
+      </div>
+    </div>
+
+    <!-- TRENDS PAGE -->
+    <div class="page" id="page-trends">
+      <div id="trendsContent">
+        <div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No trend data yet</div><div class="empty-desc">Trends build automatically as you upload weekly exports. After 2+ weeks of data, patterns and flags will appear here.</div></div>
+      </div>
+    </div>
+
+    <!-- RAW DATA PAGE -->
+    <div class="page" id="page-raw">
+      <div id="rawContent">
+        <div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-title">No data loaded</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <h2>Upload Weekly Exports</h2>
+    <p>Drop your CSV files from Gorgias, AfterShip, and Shopify. The dashboard updates automatically.</p>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="uploadPassword" placeholder="Enter password to upload">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Week Label (e.g. Mar 30 – Apr 5)</label>
+      <input type="text" class="form-input" id="weekLabel" placeholder="e.g. Mar 30 – Apr 5, 2026">
+    </div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-text">Drop CSV files here or click to browse</div>
+      <div class="drop-zone-sub">Gorgias · AfterShip · Shopify · Aircall exports</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".csv,.xlsx" style="display:none" onchange="handleFiles(this.files)">
+    <div class="file-list" id="fileList"></div>
+    <div class="upload-success" id="uploadSuccess">✅ Data uploaded successfully! Dashboard is updating...</div>
+    <div class="upload-error" id="uploadError"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeUpload()">Cancel</button>
+      <button class="btn btn-primary" id="uploadSubmit" onclick="processUpload()">Upload & Update Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+const PASS = 'xerocx123';
+const STORE_KEY = 'xero_cx_data';
+const ROSTER = ['Kelly','Kathy','Leo','Brooke','Greg','Jordan','Jake','Izzy','Jan','Kylee','Vanessa','Jori','Ross'];
+
+let state = {
+  weeks: [], // array of week objects, newest first
+  currentWeek: null,
+  selectedAgent: null,
+  currentPage: 'snapshot'
+};
+
+// Load persisted data
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORE_KEY);
+    if (saved) {
+      state = { ...state, ...JSON.parse(saved) };
+      if (state.weeks && state.weeks.length > 0) {
+        state.currentWeek = state.weeks[0];
+      }
+    }
+  } catch(e) { console.log('No saved state'); }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ weeks: state.weeks })); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+const pageTitles = {
+  snapshot: '📊 Weekly Snapshot',
+  team: '👥 Team Performance',
+  ai: '🤖 AI & Gorgias Instance',
+  returns: '📦 Returns & Warranties',
+  trends: '📈 Trends',
+  raw: '🗂️ Raw Data'
+};
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[page];
+  state.currentPage = page;
+  state.selectedAgent = null;
+  renderCurrentPage();
+}
+
+function renderCurrentPage() {
+  const p = state.currentPage;
+  if (p === 'snapshot') renderSnapshot();
+  else if (p === 'team') renderTeam();
+  else if (p === 'ai') renderAI();
+  else if (p === 'returns') renderReturns();
+  else if (p === 'trends') renderTrends();
+  else if (p === 'raw') renderRaw();
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function badge(text, color) {
+  return `<span class="badge ${color}">${text}</span>`;
+}
+
+function flagBadge(value, target, direction='lower', label='') {
+  let color = 'gray';
+  try {
+    const v = parseFloat(String(value).replace(/[%$,]/g,''));
+    const t = parseFloat(String(target).replace(/[%$,]/g,''));
+    if (direction === 'lower') color = v <= t ? 'green' : v <= t*1.25 ? 'amber' : 'red';
+    else color = v >= t ? 'green' : v >= t*0.85 ? 'amber' : 'red';
+  } catch(e) {}
+  return badge(label || value, color);
+}
+
+function statusIcon(color) {
+  return color === 'red' ? '🔴' : color === 'amber' ? '🟡' : color === 'green' ? '✅' : '—';
+}
+
+function matchAgent(name) {
+  for (const r of ROSTER) {
+    if (String(name).toLowerCase().includes(r.toLowerCase())) return r;
+  }
+  return null;
+}
+
+function getAgentFlag(agent) {
+  const frt = String(agent['First response time'] || '—');
+  const res = String(agent['Resolution time'] || '—');
+  const ot = String(agent['One touch tickets'] || '—');
+  if (frt.includes('mo') || (frt.includes('d') && parseInt(frt) >= 7)) return 'red';
+  if (frt.includes('d') && parseInt(frt) >= 1) return 'amber';
+  if (res.includes('mo')) return 'red';
+  if (ot !== '—' && ot !== '-') {
+    const pct = parseFloat(ot);
+    if (!isNaN(pct) && pct < 30) return 'amber';
+  }
+  const frtHasOnlyMins = frt.includes('m') && !frt.includes('d') && !frt.includes('h');
+  const frtLowHours = frt.includes('h') && !frt.includes('d') && parseInt(frt) < 2;
+  if (frtHasOnlyMins || frtLowHours) return 'kudos';
+  return 'ok';
+}
+
+function sparkline(data, color='#4CAACE') {
+  if (!data || data.length === 0) return '';
+  const max = Math.max(...data);
+  return `<div class="sparkline">${data.map(v => {
+    const h = max > 0 ? Math.max(4, Math.round((v/max)*32)) : 4;
+    return `<div class="spark-bar" style="height:${h}px;background:${color};opacity:0.7"></div>`;
+  }).join('')}</div>`;
+}
+
+function updateSidebarWeek() {
+  if (state.currentWeek) {
+    document.getElementById('sidebarWeekLabel').textContent = state.currentWeek.label || 'Current Week';
+    document.getElementById('sidebarWeekSub').textContent = `${state.weeks.length} week(s) loaded`;
+    document.getElementById('topbarWeek').textContent = state.currentWeek.label || 'Current Week';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: SNAPSHOT
+// ══════════════════════════════════════════════════════
+function renderSnapshot() {
+  const el = document.getElementById('snapshotContent');
+  if (!state.currentWeek) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data loaded yet</div><div class="empty-desc">Upload your weekly exports using the button in the sidebar.</div><button class="btn btn-primary" onclick="openUpload()" style="display:inline-block;width:auto">Upload Exports</button></div>`;
+    return;
+  }
+  const w = state.currentWeek;
+  const s = w.shopify || {};
+  const g = w.gorgias || {};
+  const ai = w.ai || {};
+
+  const wkSales = s.weekSales || 0;
+  const wkReturns = s.weekReturns || 0;
+  const rr = wkSales > 0 ? (wkReturns/wkSales*100) : 0;
+  const rrColor = rr > 20 ? 'red' : rr > 15 ? 'amber' : 'green';
+  const slaAch = parseFloat(g.slaAchievement || 94.18);
+  const slaColor = slaAch >= 94 ? 'green' : slaAch >= 90 ? 'amber' : 'red';
+  const slaBreaches = g.slaBreaches || 0;
+  const breachColor = slaBreaches > 100 ? 'red' : slaBreaches > 80 ? 'amber' : 'green';
+  const aiRate = parseFloat(ai.automationRate || 0.33) * 100;
+  const aiColor = aiRate >= 40 ? 'green' : aiRate >= 30 ? 'amber' : 'red';
+
+  el.innerHTML = `
+    <div class="grid grid-4" style="margin-bottom:8px">
+      <div class="card">
+        <div class="card-label">Total Sales</div>
+        <div class="card-value blue">$${(wkSales/1000).toFixed(1)}K</div>
+        <div class="card-sub">Week of ${w.label}</div>
+      </div>
+      <div class="card ${rrColor}">
+        <div class="card-label">Return Rate</div>
+        <div class="card-value ${rrColor}">${rr.toFixed(1)}%</div>
+        <div class="card-flag ${rrColor}">${statusIcon(rrColor)} Target ≤15%</div>
+      </div>
+      <div class="card ${slaColor}">
+        <div class="card-label">SLA Achievement</div>
+        <div class="card-value ${slaColor}">${slaAch.toFixed(1)}%</div>
+        <div class="card-flag ${slaColor}">${statusIcon(slaColor)} Target ≥94%</div>
+      </div>
+      <div class="card ${aiColor}">
+        <div class="card-label">AI Automation Rate</div>
+        <div class="card-value ${aiColor}">${aiRate.toFixed(0)}%</div>
+        <div class="card-flag ${aiColor}">${statusIcon(aiColor)} Target ≥40%</div>
+      </div>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label">Total Returns</div>
+        <div class="card-value">$${(wkReturns/1000).toFixed(1)}K</div>
+        <div class="card-sub">This week</div>
+      </div>
+      <div class="card ${breachColor}">
+        <div class="card-label">SLA Breaches</div>
+        <div class="card-value ${breachColor}">${slaBreaches}</div>
+        <div class="card-flag ${breachColor}">${statusIcon(breachColor)} Target &lt;80</div>
+      </div>
+      <div class="card">
+        <div class="card-label">AI Interactions</div>
+        <div class="card-value blue">${ai.interactions || '—'}</div>
+        <div class="card-sub">vs ${ai.prevInteractions || '—'} prior week</div>
+      </div>
+      <div class="card">
+        <div class="card-label">AI Cost Saved</div>
+        <div class="card-value blue">${ai.costSaved || '—'}</div>
+        <div class="card-sub">vs ${ai.prevCostSaved || '—'} prior week</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mt-4">
+      <div>
+        <div class="section-title">⚠️ Concerns This Week</div>
+        ${renderConcerns(w)}
+      </div>
+      <div>
+        <div class="section-title">⭐ Kudos & Highlights</div>
+        ${renderKudos(w)}
+      </div>
+    </div>
+
+    <div class="section-title">Channel First Response Times</div>
+    ${renderChannelSummary(w)}
+  `;
+}
+
+function renderConcerns(w) {
+  const concerns = w.concerns || [];
+  if (concerns.length === 0) return `<div class="concern-item amber"><div class="concern-icon">ℹ️</div><div><div class="concern-title">No concerns flagged</div><div class="concern-desc">All metrics within target ranges this week.</div></div></div>`;
+  return concerns.map(c => `
+    <div class="concern-item ${c.level}">
+      <div class="concern-icon">${c.level === 'red' ? '🔴' : '🟡'}</div>
+      <div>
+        <div class="concern-title">${c.title}</div>
+        <div class="concern-desc">${c.detail}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderKudos(w) {
+  const kudos = w.kudos || [];
+  if (kudos.length === 0) return `<div class="kudos-item"><div><div class="kudos-name">No kudos data</div><div class="kudos-desc">Upload agent metrics to surface kudos.</div></div></div>`;
+  return kudos.map(k => `
+    <div class="kudos-item">
+      <div>⭐</div>
+      <div>
+        <div class="kudos-name">${k.name}</div>
+        <div class="kudos-desc">${k.detail}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderChannelSummary(w) {
+  const channels = (w.gorgias || {}).channels || [];
+  if (!channels.length) return `<div class="text-muted" style="font-size:13px">No channel data available.</div>`;
+  const keyChannels = channels.filter(c => ['email','chat','aircall','facebook','instagram-direct-message'].includes(c.Channel));
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Channel</th><th>Tickets Created</th><th>First Response</th><th>Resolution</th><th>Status</th></tr></thead>
+    <tbody>${keyChannels.map((c,i) => {
+      const frt = c['First response time'] || '—';
+      let status = 'gray', statusText = '—';
+      if (frt !== '—' && frt !== '-') {
+        if (frt.includes('d') && parseInt(frt) >= 3) { status='red'; statusText='🔴 Critical'; }
+        else if (frt.includes('d')) { status='amber'; statusText='🟡 Watch'; }
+        else { status='green'; statusText='✅ OK'; }
+      }
+      return `<tr><td><strong>${c.Channel}</strong></td><td>${c['Created tickets']||'—'}</td><td class="mono">${frt}</td><td class="mono">${c['Resolution time']||'—'}</td><td>${badge(statusText,status)}</td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: TEAM
+// ══════════════════════════════════════════════════════
+function renderTeam() {
+  const el = document.getElementById('teamContent');
+  if (!state.currentWeek) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No data loaded</div></div>`; return; }
+
+  if (state.selectedAgent) { renderAgentDetail(el); return; }
+
+  const agents = (state.currentWeek.gorgias || {}).agents || [];
+  const rosterAgents = agents.filter(a => matchAgent(a.Agent));
+  const filtered = state.teamSearch ? rosterAgents.filter(a => String(a.Agent).toLowerCase().includes(state.teamSearch.toLowerCase())) : rosterAgents;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:13px;color:var(--text-muted)">${rosterAgents.length} agents — Week of ${state.currentWeek.label}</div>
+      </div>
+      <input type="text" class="form-input" style="width:200px" placeholder="Filter agent..." oninput="filterAgents(this.value)" value="${state.teamSearch||''}">
+    </div>
+    <div class="agent-grid">
+      ${filtered.map(a => renderAgentCard(a)).join('')}
+    </div>
+    <div class="section-title" style="margin-top:28px">Phone Performance — Daily</div>
+    ${renderPhoneTable()}
+  `;
+}
+
+function filterAgents(val) {
+  state.teamSearch = val;
+  renderTeam();
+}
+
+function renderAgentCard(a) {
+  const flag = getAgentFlag(a);
+  const name = matchAgent(a.Agent) || a.Agent;
+  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  return `
+    <div class="agent-card ${flag === 'ok' ? '' : flag === 'kudos' ? 'kudos' : flag}" onclick="openAgent('${name}')">
+      <div class="agent-name">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="agent-avatar" style="width:32px;height:32px;font-size:12px">${initials}</div>
+          ${name}
+        </div>
+        <span>${flag==='red'?'🔴':flag==='amber'?'🟡':flag==='kudos'?'⭐':'✅'}</span>
+      </div>
+      <div class="agent-metrics">
+        <div class="agent-metric">
+          <div class="agent-metric-label">First Response</div>
+          <div class="agent-metric-value ${flag==='red'?'text-red':flag==='amber'?'text-amber':''}">${a['First response time']||'—'}</div>
+        </div>
+        <div class="agent-metric">
+          <div class="agent-metric-label">Resolution</div>
+          <div class="agent-metric-value">${a['Resolution time']||'—'}</div>
+        </div>
+        <div class="agent-metric">
+          <div class="agent-metric-label">One-Touch</div>
+          <div class="agent-metric-value">${a['One touch tickets']||'—'}</div>
+        </div>
+        <div class="agent-metric">
+          <div class="agent-metric-label">Online Time</div>
+          <div class="agent-metric-value">${a['Online time']||'—'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAgentDetail(el) {
+  const agents = (state.currentWeek.gorgias || {}).agents || [];
+  const a = agents.find(ag => matchAgent(ag.Agent) === state.selectedAgent);
+  if (!a) { renderTeam(); return; }
+  const flag = getAgentFlag(a);
+  const name = matchAgent(a.Agent) || a.Agent;
+  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+
+  // History across weeks
+  const history = state.weeks.map(w => {
+    const wAgents = (w.gorgias||{}).agents||[];
+    const wa = wAgents.find(ag => matchAgent(ag.Agent) === state.selectedAgent);
+    return { label: w.label, agent: wa };
+  }).filter(h => h.agent);
+
+  el.innerHTML = `
+    <div class="back-btn" onclick="state.selectedAgent=null;renderTeam()">← Back to Team</div>
+    <div class="agent-detail-header">
+      <div class="agent-avatar">${initials}</div>
+      <div>
+        <div style="font-size:20px;font-weight:700">${name}</div>
+        <div style="font-size:13px;color:var(--text-muted)">Week of ${state.currentWeek.label}</div>
+      </div>
+      <span style="margin-left:auto">${flag==='red'?badge('🔴 Needs Attention','red'):flag==='amber'?badge('🟡 Watch','amber'):flag==='kudos'?badge('⭐ Kudos','kudos'):badge('✅ On Target','green')}</span>
+    </div>
+    <div class="grid grid-4">
+      ${[
+        ['First Response',a['First response time']||'—',flag==='red'?'red':''],
+        ['Avg Response',a['Average response time']||'—',''],
+        ['Resolution Time',a['Resolution time']||'—',''],
+        ['One-Touch %',a['One touch tickets']||'—',''],
+        ['Tickets Replied',a['Tickets replied']||'—','blue'],
+        ['Messages Sent',a['Messages sent']||'—',''],
+        ['Online Time',a['Online time']||'—',''],
+        ['Msg/Hr',a['Messages sent per hour']||'—',''],
+      ].map(([label,val,color])=>`
+        <div class="card">
+          <div class="card-label">${label}</div>
+          <div class="card-value ${color}" style="font-size:20px">${val}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${history.length > 1 ? `
+      <div class="section-title" style="margin-top:24px">History — All Weeks</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Week</th><th>First Response</th><th>Resolution</th><th>One-Touch</th><th>Tickets</th><th>Online</th><th>Status</th></tr></thead>
+        <tbody>${history.map(h=>{
+          const hf = getAgentFlag(h.agent);
+          return `<tr>
+            <td><strong>${h.label}</strong></td>
+            <td class="mono">${h.agent['First response time']||'—'}</td>
+            <td class="mono">${h.agent['Resolution time']||'—'}</td>
+            <td>${h.agent['One touch tickets']||'—'}</td>
+            <td>${h.agent['Tickets replied']||'—'}</td>
+            <td>${h.agent['Online time']||'—'}</td>
+            <td>${hf==='red'?badge('🔴','red'):hf==='amber'?badge('🟡','amber'):hf==='kudos'?badge('⭐','kudos'):badge('✅','green')}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    ` : ''}
+  `;
+}
+
+function openAgent(name) {
+  state.selectedAgent = name;
+  renderTeam();
+}
+
+function renderPhoneTable() {
+  const calls = (state.currentWeek.gorgias || {}).calls || [];
+  if (!calls.length) return `<div class="text-muted" style="font-size:13px">No phone data available.</div>`;
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Inbound</th><th>Answered</th><th>% Answered</th><th>% In SLA</th><th>Missed</th><th>Avg Wait</th><th>Status</th></tr></thead>
+    <tbody>${calls.map(c => {
+      const ap = parseFloat(String(c['% answered inbound']||'0').replace('%',''));
+      const color = isNaN(ap) ? 'gray' : ap >= 75 ? 'green' : ap >= 60 ? 'amber' : 'red';
+      return `<tr>
+        <td>${c['daily breakdown']||'—'}</td>
+        <td>${c['total inbound calls']||'—'}</td>
+        <td>${c['answered inbound']||'—'}</td>
+        <td>${badge(c['% answered inbound']||'—', color)}</td>
+        <td>${c['% inbound in sla (vs answered)']||'—'}</td>
+        <td>${c['missed inbound calls']||'—'}</td>
+        <td class="mono">${c['avg wait time to answer']||'—'}</td>
+        <td>${badge(color==='green'?'✅ OK':color==='amber'?'🟡 Watch':'🔴 Low', color)}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: AI
+// ══════════════════════════════════════════════════════
+function renderAI() {
+  const el = document.getElementById('aiContent');
+  if (!state.currentWeek) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">No data loaded</div></div>`; return; }
+  const ai = state.currentWeek.ai || {};
+  const tags = (state.currentWeek.gorgias || {}).tags || [];
+  const auto = (state.currentWeek.gorgias || {}).automate || [];
+
+  const aiRate = parseFloat(ai.automationRate||0)*100;
+  const aiColor = aiRate>=40?'green':aiRate>=30?'amber':'red';
+
+  el.innerHTML = `
+    <div class="grid grid-4">
+      <div class="card ${aiColor}">
+        <div class="card-label">AI Automation Rate</div>
+        <div class="card-value ${aiColor}">${aiRate.toFixed(0)}%</div>
+        <div class="card-flag ${aiColor}">${statusIcon(aiColor)} Target ≥40%</div>
+      </div>
+      <div class="card">
+        <div class="card-label">AI Interactions</div>
+        <div class="card-value blue">${ai.interactions||'—'}</div>
+        <div class="card-sub">Prior: ${ai.prevInteractions||'—'}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Time Saved</div>
+        <div class="card-value blue">${ai.timeSaved||'—'}</div>
+        <div class="card-sub">Prior: ${ai.prevTimeSaved||'—'}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Cost Saved</div>
+        <div class="card-value blue">${ai.costSaved||'—'}</div>
+        <div class="card-sub">Prior: ${ai.prevCostSaved||'—'}</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mt-4">
+      <div>
+        <div class="section-title">Daily AI Activity</div>
+        ${auto.length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>AI Interactions</th><th>Flows</th><th>Track Order</th></tr></thead>
+          <tbody>${auto.map(r=>{
+            const v = parseInt(r['AI Agent']||0);
+            return `<tr><td>${r.date||'—'}</td><td ${v===0?'style="color:var(--amber)"':''}><strong>${v}</strong>${v===0?' ⚠️':''}</td><td>${r['Flows']||0}</td><td>${r['Track order']||0}</td></tr>`;
+          }).join('')}</tbody>
+        </table></div>` : '<div class="text-muted" style="font-size:13px">No automation data.</div>'}
+      </div>
+      <div>
+        <div class="section-title">Top Ticket Tags</div>
+        ${tags.length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Tag</th><th>Total</th><th>%</th><th>WoW Delta</th></tr></thead>
+          <tbody>${tags.slice(0,12).map(t=>{
+            const delta = String(t.delta||'—');
+            const dcolor = delta.includes('+') ? 'amber' : delta.includes('-') ? 'green' : 'gray';
+            return `<tr><td><strong>${t.tag}</strong></td><td>${t.total}</td><td>${t.percentage||'—'}</td><td>${badge(delta,dcolor)}</td></tr>`;
+          }).join('')}</tbody>
+        </table></div>` : '<div class="text-muted" style="font-size:13px">No tag data.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: RETURNS
+// ══════════════════════════════════════════════════════
+function renderReturns() {
+  const el = document.getElementById('returnsContent');
+  if (!state.currentWeek) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No data loaded</div></div>`; return; }
+  const s = state.currentWeek.shopify || {};
+  const af = state.currentWeek.aftership || {};
+  const daily = s.daily || [];
+
+  el.innerHTML = `
+    <div class="section-title">Daily Sales vs Returns</div>
+    ${daily.length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Total Sales</th><th>Returns</th><th>Return Rate</th><th>Status</th></tr></thead>
+      <tbody>${daily.map(d=>{
+        const rr = parseFloat(d.returnRate||0);
+        const color = rr>20?'red':rr>15?'amber':'green';
+        return `<tr>
+          <td>${d.date}</td>
+          <td class="mono">$${Number(d.sales).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td class="mono">$${Number(d.returns).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+          <td>${badge(rr.toFixed(1)+'%',color)}</td>
+          <td>${badge(color==='green'?'✅ On Target':color==='amber'?'🟡 Watch':'🔴 High',color)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>` : `<div class="text-muted" style="font-size:13px">No Shopify daily data. Upload sales exports.</div>`}
+
+    <div class="grid grid-2 mt-4">
+      <div>
+        <div class="section-title">🚩 Top Returned Products</div>
+        ${(af.returnedProducts||[]).length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Return Qty</th><th>Return Rate</th><th>Value</th></tr></thead>
+          <tbody>${(af.returnedProducts||[]).slice(0,10).map(p=>{
+            const rr = parseFloat(String(p['Item return rate']||'0').replace('%',''));
+            const color = rr>40?'red':rr>25?'amber':'gray';
+            return `<tr>
+              <td style="max-width:200px;font-size:12px">${p['Product title']||'—'}</td>
+              <td>${p['Return quantity']||'—'}</td>
+              <td>${badge((rr||0).toFixed(1)+'%',color)}</td>
+              <td style="font-size:12px">${p['Return value']||'—'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>` : `<div class="text-muted" style="font-size:13px">No AfterShip product data. Upload monthly returns export.</div>`}
+      </div>
+      <div>
+        <div class="section-title">🔧 Warranty Claims</div>
+        ${(af.warranty||[]).length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Reason</th><th>Qty</th></tr></thead>
+          <tbody>${(af.warranty||[]).slice(0,10).map(p=>`
+            <tr>
+              <td style="font-size:12px">${p['Product']||'—'}</td>
+              <td>${badge(p['Warranty reason']||'—','blue')}</td>
+              <td>${p['Warranty quantity']||'—'}</td>
+            </tr>
+          `).join('')}</tbody>
+        </table></div>` : `<div class="text-muted" style="font-size:13px">No warranty data. Upload monthly warranty export.</div>`}
+      </div>
+    </div>
+
+    <div class="section-title mt-4">Top Return Reasons</div>
+    ${(af.returnReasons||[]).length ? `<div class="table-wrap"><table>
+      <thead><tr><th>Product</th><th>SKU</th><th>Reason</th><th>Sub-Reason</th><th>Qty</th></tr></thead>
+      <tbody>${(af.returnReasons||[]).slice(0,12).map((r,i)=>`
+        <tr>
+          <td style="font-size:12px">${r['Product title']||'—'}</td>
+          <td class="mono" style="font-size:11px">${r['SKU']||'—'}</td>
+          <td>${r['Return reason']||'—'}</td>
+          <td style="font-size:12px">${r['Sub-reason']||'—'}</td>
+          <td>${r['Return quantity']||'—'}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table></div>` : `<div class="text-muted" style="font-size:13px">No return reason data.</div>`}
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: TRENDS
+// ══════════════════════════════════════════════════════
+function renderTrends() {
+  const el = document.getElementById('trendsContent');
+  if (!state.weeks || state.weeks.length < 1) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No trend data yet</div><div class="empty-desc">Upload 2+ weeks of data to see trends and pattern flags.</div></div>`;
+    return;
+  }
+
+  const weeks = [...state.weeks].reverse(); // oldest first for trend display
+  el.innerHTML = `
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">${weeks.length} week(s) of data. ${weeks.length < 2 ? 'Upload another week to see trends.' : 'Showing week-over-week comparison.'}</div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Week</th><th>Sales</th><th>Returns</th><th>Return Rate</th>
+        <th>SLA Achievement</th><th>SLA Breaches</th><th>AI Rate</th><th>Flags</th>
+      </tr></thead>
+      <tbody>${weeks.map((w,i) => {
+        const s = w.shopify||{}; const g = w.gorgias||{}; const ai = w.ai||{};
+        const rr = s.weekSales>0 ? (s.weekReturns/s.weekSales*100) : 0;
+        const sla = parseFloat(g.slaAchievement||94);
+        const breaches = g.slaBreaches||0;
+        const aiRate = parseFloat(ai.automationRate||0)*100;
+        const rrColor = rr>20?'red':rr>15?'amber':'green';
+        const slaColor = sla>=94?'green':sla>=90?'amber':'red';
+        const bColor = breaches>100?'red':breaches>80?'amber':'green';
+        const aiColor = aiRate>=40?'green':aiRate>=30?'amber':'red';
+        const flags = [];
+        if(rrColor!=='green') flags.push(badge(`${rrColor==='red'?'🔴':'🟡'} RR`,rrColor));
+        if(slaColor!=='green') flags.push(badge(`${slaColor==='red'?'🔴':'🟡'} SLA`,slaColor));
+        if(bColor!=='green') flags.push(badge(`${bColor==='red'?'🔴':'🟡'} Breaches`,bColor));
+        if(aiColor!=='green') flags.push(badge(`${aiColor==='red'?'🔴':'🟡'} AI`,aiColor));
+        return `<tr>
+          <td><strong>${w.label}</strong></td>
+          <td class="mono">$${((s.weekSales||0)/1000).toFixed(1)}K</td>
+          <td class="mono">$${((s.weekReturns||0)/1000).toFixed(1)}K</td>
+          <td>${badge(rr.toFixed(1)+'%',rrColor)}</td>
+          <td>${badge(sla.toFixed(1)+'%',slaColor)}</td>
+          <td>${badge(breaches,bColor)}</td>
+          <td>${badge(aiRate.toFixed(0)+'%',aiColor)}</td>
+          <td><div class="trend-flag-cell">${flags.join(' ')||badge('✅ Clean','green')}</div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+
+    ${weeks.length >= 2 ? `
+      <div class="section-title" style="margin-top:24px">Pattern Alerts</div>
+      ${detectPatterns(weeks)}
+    ` : ''}
+  `;
+}
+
+function detectPatterns(weeks) {
+  const alerts = [];
+  // Check return rate pattern
+  const rrVals = weeks.map(w => w.shopify?.weekSales>0 ? w.shopify.weekReturns/w.shopify.weekSales*100 : 0);
+  const highRR = rrVals.filter(v=>v>15);
+  if (highRR.length >= 2) alerts.push({level:'red',title:`Return rate above 15% for ${highRR.length} consecutive week(s)`,detail:'Consistent pattern — investigate if sizing guidance, product quality, or promotion-driven.'});
+  // SLA breach pattern
+  const breachVals = weeks.map(w => w.gorgias?.slaBreaches||0);
+  if (breachVals.length>=2 && breachVals.every(v=>v>80)) alerts.push({level:'amber',title:'SLA breaches above 80 for multiple weeks',detail:'Pattern emerging — review channel and agent breakdown.'});
+  // AI drop
+  const aiVals = weeks.map(w => parseFloat(w.ai?.automationRate||0)*100);
+  if (aiVals.length>=2 && aiVals.every(v=>v<40)) alerts.push({level:'amber',title:'AI automation rate below 40% for multiple weeks',detail:'Check if flows changed or AI agent configuration needs review.'});
+
+  if (!alerts.length) return `<div class="concern-item green" style="border-color:rgba(63,185,80,0.3);background:var(--green-bg)"><div class="concern-icon">✅</div><div><div class="concern-title">No repeated patterns flagged</div><div class="concern-desc">All metrics look stable week-over-week.</div></div></div>`;
+  return alerts.map(a=>`<div class="concern-item ${a.level}"><div class="concern-icon">${a.level==='red'?'🔴':'🟡'}</div><div><div class="concern-title">${a.title}</div><div class="concern-desc">${a.detail}</div></div></div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: RAW DATA
+// ══════════════════════════════════════════════════════
+function renderRaw() {
+  const el = document.getElementById('rawContent');
+  if (!state.currentWeek) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-title">No data loaded</div></div>`; return; }
+
+  const tabs = [
+    {id:'raw-agents',label:'Agents'},
+    {id:'raw-channels',label:'Channels'},
+    {id:'raw-calls',label:'Phone'},
+    {id:'raw-tags',label:'Tags'},
+    {id:'raw-returns',label:'Returns'},
+    {id:'raw-warranty',label:'Warranties'},
+    {id:'raw-shopify',label:'Shopify Daily'},
+  ];
+
+  el.innerHTML = `
+    <div class="tab-bar">${tabs.map(t=>`<div class="tab" onclick="showRawTab('${t.id}',this)">${t.label}</div>`).join('')}</div>
+    <div id="raw-agents">${renderRawTable((state.currentWeek.gorgias||{}).agents||[])}</div>
+    <div id="raw-channels" style="display:none">${renderRawTable((state.currentWeek.gorgias||{}).channels||[])}</div>
+    <div id="raw-calls" style="display:none">${renderRawTable((state.currentWeek.gorgias||{}).calls||[])}</div>
+    <div id="raw-tags" style="display:none">${renderRawTable((state.currentWeek.gorgias||{}).tags||[])}</div>
+    <div id="raw-returns" style="display:none">${renderRawTable((state.currentWeek.aftership||{}).returnedProducts||[])}</div>
+    <div id="raw-warranty" style="display:none">${renderRawTable((state.currentWeek.aftership||{}).warranty||[])}</div>
+    <div id="raw-shopify" style="display:none">${renderRawTable((state.currentWeek.shopify||{}).daily||[])}</div>
+  `;
+  el.querySelectorAll('.tab')[0].classList.add('active');
+}
+
+function showRawTab(id, el) {
+  document.querySelectorAll('#rawContent .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#rawContent [id^="raw-"]').forEach(d=>d.style.display='none');
+  document.getElementById(id).style.display='block';
+  el.classList.add('active');
+}
+
+function renderRawTable(data) {
+  if (!data || data.length === 0) return `<div class="text-muted" style="font-size:13px;padding:20px">No data available for this source.</div>`;
+  const keys = Object.keys(data[0]);
+  return `<div class="table-wrap"><table>
+    <thead><tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr></thead>
+    <tbody>${data.map(row=>`<tr>${keys.map(k=>`<td style="font-size:12px;white-space:nowrap">${row[k]||'—'}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════════════════
+function handleSearch(val) {
+  const results = document.getElementById('searchResults');
+  if (!val || val.length < 2) { results.style.display='none'; return; }
+  const items = [];
+  const v = val.toLowerCase();
+
+  // Search agents
+  if (state.currentWeek) {
+    const agents = (state.currentWeek.gorgias||{}).agents||[];
+    agents.filter(a=>matchAgent(a.Agent)&&String(a.Agent).toLowerCase().includes(v)).forEach(a=>{
+      const name = matchAgent(a.Agent);
+      items.push({type:'Agent',label:name,action:`openAgentFromSearch('${name}')`});
+    });
+    // Search products
+    const rp = (state.currentWeek.aftership||{}).returnedProducts||[];
+    rp.filter(p=>String(p['Product title']||'').toLowerCase().includes(v)).slice(0,3).forEach(p=>{
+      items.push({type:'Product',label:p['Product title'],action:`showPage('returns')`});
+    });
+  }
+  // Search weeks
+  state.weeks.filter(w=>String(w.label||'').toLowerCase().includes(v)).forEach(w=>{
+    items.push({type:'Week',label:w.label,action:`selectWeek('${w.label}')`});
+  });
+
+  if (!items.length) { results.style.display='none'; return; }
+  results.innerHTML = items.slice(0,8).map(i=>`
+    <div class="search-result-item" onclick="${i.action};document.getElementById('globalSearch').value='';document.getElementById('searchResults').style.display='none'">
+      <div class="sr-type">${i.type}</div>
+      ${i.label}
+    </div>
+  `).join('');
+  results.style.display='block';
+}
+
+function openAgentFromSearch(name) {
+  state.selectedAgent = name;
+  showPage('team');
+}
+
+function selectWeek(label) {
+  const w = state.weeks.find(w=>w.label===label);
+  if (w) { state.currentWeek = w; updateSidebarWeek(); renderCurrentPage(); }
+}
+
+// Close search on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) document.getElementById('searchResults').style.display='none';
+});
+
+// ══════════════════════════════════════════════════════
+// UPLOAD & FILE PROCESSING
+// ══════════════════════════════════════════════════════
+let uploadedFiles = [];
+
+function openUpload() {
+  document.getElementById('uploadModal').classList.add('open');
+  document.getElementById('uploadPassword').value='';
+  document.getElementById('uploadSuccess').style.display='none';
+  document.getElementById('uploadError').style.display='none';
+  uploadedFiles = [];
+  document.getElementById('fileList').innerHTML='';
+}
+
+function closeUpload() { document.getElementById('uploadModal').classList.remove('open'); }
+
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('dragover'); handleFiles(e.dataTransfer.files); }
+
+function handleFiles(files) {
+  for (const f of files) uploadedFiles.push(f);
+  renderFileList();
+}
+
+function detectFileType(filename) {
+  const n = filename.toLowerCase();
+  if (n.includes('agent')) return 'Gorgias — Agents';
+  if (n.includes('overview')) return 'Gorgias — Overview';
+  if (n.includes('ai insight') || n.includes('ai-insight')) return 'Gorgias — AI';
+  if (n.includes('automate')) return 'Gorgias — Automation';
+  if (n.includes('channel')) return 'Gorgias — Channels';
+  if (n.includes('tag')) return 'Gorgias — Tags';
+  if (n.includes('trend')) return 'Gorgias — SLA Trend';
+  if (n.includes('global_call')) return 'Aircall — Call KPIs';
+  if (n.includes('return_reason')) return 'AfterShip — Return Reasons';
+  if (n.includes('returned_product')) return 'AfterShip — Returned Products';
+  if (n.includes('warranty')) return 'AfterShip — Warranty';
+  if (n.includes('refund')) return 'Shopify — Refunds';
+  if (n.includes('sales') || n.includes('total_sales')) return 'Shopify — Sales';
+  return 'Unknown — will attempt to parse';
+}
+
+function renderFileList() {
+  document.getElementById('fileList').innerHTML = uploadedFiles.map(f=>`
+    <div class="file-item">
+      <span>📄</span>
+      <span class="fi-name">${f.name}</span>
+      <span class="fi-type">${detectFileType(f.name)}</span>
+    </div>
+  `).join('');
+}
+
+async function processUpload() {
+  const pass = document.getElementById('uploadPassword').value;
+  const weekLbl = document.getElementById('weekLabel').value.trim();
+  const errEl = document.getElementById('uploadError');
+  const sucEl = document.getElementById('uploadSuccess');
+  errEl.style.display='none'; sucEl.style.display='none';
+
+  if (pass !== PASS) { errEl.textContent='❌ Incorrect password.'; errEl.style.display='block'; return; }
+  if (!weekLbl) { errEl.textContent='❌ Please enter a week label.'; errEl.style.display='block'; return; }
+  if (!uploadedFiles.length) { errEl.textContent='❌ No files selected.'; errEl.style.display='block'; return; }
+
+  document.getElementById('uploadSubmit').disabled = true;
+  document.getElementById('uploadSubmit').textContent = 'Processing...';
+
+  try {
+    const weekData = { label: weekLbl, gorgias: {}, shopify: {}, aftership: {}, ai: {}, concerns: [], kudos: [] };
+
+    for (const file of uploadedFiles) {
+      await parseFile(file, weekData);
+    }
+
+    buildDerivedData(weekData);
+
+    // Add or replace week
+    const idx = state.weeks.findIndex(w => w.label === weekLbl);
+    if (idx >= 0) state.weeks[idx] = weekData;
+    else state.weeks.unshift(weekData);
+    state.currentWeek = weekData;
+
+    saveState();
+    updateSidebarWeek();
+
+    sucEl.style.display='block';
+    setTimeout(() => {
+      closeUpload();
+      renderCurrentPage();
+    }, 1500);
+  } catch(e) {
+    errEl.textContent = '❌ Error processing files: ' + e.message;
+    errEl.style.display='block';
+  }
+  document.getElementById('uploadSubmit').disabled = false;
+  document.getElementById('uploadSubmit').textContent = 'Upload & Update Dashboard';
+}
+
+async function parseFile(file, weekData) {
+  const text = await file.text();
+  const n = file.name.toLowerCase();
+  let parsed;
+  try { parsed = Papa.parse(text, {header:true,skipEmptyLines:true}).data; } catch(e) { return; }
+
+  if (n.includes('agent')) weekData.gorgias.agents = parsed;
+  else if (n.includes('overview')) {
+    const map = {};
+    parsed.forEach(r => { const k = Object.values(r)[0]; const v = Object.values(r)[1]; map[k]=v; });
+    weekData.gorgias.slaAchievement = parseFloat(String(map['Achievement rate']||'94').replace('%',''));
+    weekData.gorgias.slaBreaches = parseInt(map['Tickets with breached SLAs']||0);
+  }
+  else if (n.includes('ai insight') || n.includes('ai-insight') || n.includes('ai_insight')) {
+    const map = {};
+    parsed.forEach(r => { const k = String(Object.values(r)[0]).trim(); const cur = Object.values(r)[1]; const prev = Object.values(r)[2]; map[k]={cur,prev}; });
+    weekData.ai.automationRate = map['AI Agent automation rate']?.cur || '0.33';
+    weekData.ai.interactions = map['AI Agent automated interactions']?.cur || '—';
+    weekData.ai.prevInteractions = map['AI Agent automated interactions']?.prev || '—';
+    weekData.ai.timeSaved = map['Overall time saved by agents']?.cur || '—';
+    weekData.ai.prevTimeSaved = map['Overall time saved by agents']?.prev || '—';
+    weekData.ai.costSaved = '$' + parseFloat(map['Cost saved']?.cur||0).toLocaleString();
+    weekData.ai.prevCostSaved = '$' + parseFloat(map['Cost saved']?.prev||0).toLocaleString();
+  }
+  else if (n.includes('automate')) {
+    weekData.gorgias.automate = parsed.map(r => ({
+      date: String(Object.values(r)[0]).split('T')[0],
+      'AI Agent': r['AI Agent']||0, 'Flows': r['Flows']||0, 'Track order': r['Track order']||0
+    }));
+  }
+  else if (n.includes('channel')) weekData.gorgias.channels = parsed;
+  else if (n.includes('tag')) weekData.gorgias.tags = parsed;
+  else if (n.includes('trend')) weekData.gorgias.slaTrend = parsed;
+  else if (n.includes('global_call') || n.includes('global_kpi')) weekData.gorgias.calls = parsed;
+  else if (n.includes('return_reason') || (n.includes('return') && n.includes('reason'))) weekData.aftership.returnReasons = parsed;
+  else if (n.includes('returned_product') || (n.includes('returned') && n.includes('product'))) {
+    weekData.aftership.returnedProducts = parsed.filter(r=>r['SKU']&&r['SKU']!=='-');
+  }
+  else if (n.includes('warranty')) weekData.aftership.warranty = parsed;
+  else if (n.includes('refund') || n.includes('return_value')) {
+    weekData.shopify.refundRows = parsed;
+  }
+  else if (n.includes('sales') || n.includes('total_sales')) {
+    weekData.shopify.salesRows = parsed;
+  }
+}
+
+function buildDerivedData(w) {
+  // Build daily shopify data
+  const salesRows = w.shopify.salesRows || [];
+  const refundRows = w.shopify.refundRows || [];
+  const salesMap = {};
+  salesRows.forEach(r => { const d=r['Day']||r['date']; if(d) salesMap[d]=parseFloat(r['Total sales']||0); });
+  const refundMap = {};
+  refundRows.forEach(r => { const d=r['Day']||r['date']; if(d) refundMap[d]=Math.abs(parseFloat(r['Returns']||r['Refund']||0)); });
+  const allDates = [...new Set([...Object.keys(salesMap),...Object.keys(refundMap)])].sort();
+  w.shopify.daily = allDates.map(d => ({
+    date: d,
+    sales: salesMap[d]||0,
+    returns: refundMap[d]||0,
+    returnRate: salesMap[d]>0 ? ((refundMap[d]||0)/salesMap[d]*100).toFixed(2) : '0'
+  }));
+  w.shopify.weekSales = Object.values(salesMap).reduce((a,b)=>a+b,0);
+  w.shopify.weekReturns = Object.values(refundMap).reduce((a,b)=>a+b,0);
+
+  // Build concerns
+  const concerns = [];
+  const rr = w.shopify.weekSales>0 ? w.shopify.weekReturns/w.shopify.weekSales*100 : 0;
+  if (rr>20) concerns.push({level:'red',title:`Return Rate ${rr.toFixed(1)}% — Well Above Target`,detail:'Target is ≤15%. Every day this week was above 20%. Investigate sizing, promotions, or specific products.'});
+  else if (rr>15) concerns.push({level:'amber',title:`Return Rate ${rr.toFixed(1)}% — Above Target`,detail:'Above 15% target. Monitor closely next week.'});
+
+  const breaches = w.gorgias.slaBreaches||0;
+  if (breaches>100) concerns.push({level:'red',title:`SLA Breaches: ${breaches} (Target <80)`,detail:'Up significantly. Check channel breakdown and agent queue in Team Performance.'});
+
+  const aiRate = parseFloat(w.ai.automationRate||0)*100;
+  if (aiRate<30) concerns.push({level:'red',title:`AI Automation Rate ${aiRate.toFixed(0)}% (Target ≥40%)`,detail:'Major drop. Check if AI flows were disabled or configuration changed.'});
+  else if (aiRate<40) concerns.push({level:'amber',title:`AI Automation Rate ${aiRate.toFixed(0)}% — Below Target`,detail:'Below 40% target. Review automation flow performance.'});
+
+  const agents = w.gorgias.agents||[];
+  agents.forEach(a => {
+    const name = matchAgent(a.Agent);
+    if (!name) return;
+    const frt = String(a['First response time']||'');
+    if (frt.includes('mo') || (frt.includes('d') && parseInt(frt)>=7)) {
+      concerns.push({level:'red',title:`${name} — First Response Time: ${frt}`,detail:'Response time is critically high. Review open ticket queue before next 1:1.'});
+    }
+  });
+
+  // Channel concerns
+  const channels = w.gorgias.channels||[];
+  channels.forEach(c => {
+    const ch = c.Channel||''; const frt = String(c['First response time']||'');
+    if ((ch==='facebook'||ch.includes('instagram')) && frt.includes('d') && parseInt(frt)>=1) {
+      concerns.push({level:'red',title:`${ch} First Response: ${frt} — Target 10 min`,detail:'Social media response time is critically above the 10-minute target.'});
+    }
+  });
+
+  w.concerns = concerns;
+
+  // Build kudos
+  const kudos = [];
+  agents.forEach(a => {
+    const name = matchAgent(a.Agent);
+    if (!name) return;
+    const flag = getAgentFlag(a);
+    const frt = String(a['First response time']||'');
+    const ot = String(a['One touch tickets']||'');
+    if (flag==='kudos' || (frt.includes('m') && !frt.includes('h') && !frt.includes('d'))) {
+      kudos.push({name, detail:`First response: ${frt}. ${ot!=='—'&&ot!=='-'?'One-touch: '+ot+'.':''} Outstanding response time this week.`});
+    }
+  });
+  w.kudos = kudos.slice(0,5);
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+loadState();
+updateSidebarWeek();
+if (state.currentWeek) renderCurrentPage();
+</script>
+</body>
+</html>
