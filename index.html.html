@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xero Shoes — CX Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --blue:#4CAACE;--blue-dark:#1A5276;--blue-mid:#2980B9;
+  --bg:#F0F2F5;--surface:#FFFFFF;--surface2:#F8F9FA;
+  --border:#E5E8EC;--border-strong:#D0D5DD;
+  --text:#1A202C;--text-muted:#6B7280;--text-dim:#9CA3AF;
+  --red:#E53E3E;--red-light:#FFF5F5;--red-border:#FED7D7;
+  --amber:#D97706;--amber-light:#FFFBEB;--amber-border:#FDE68A;
+  --green:#059669;--green-light:#F0FDF4;--green-border:#A7F3D0;
+  --purple:#7C3AED;--purple-light:#F5F3FF;
+  --teal:#0D9488;--teal-light:#F0FDFA;
+  --orange:#EA580C;--orange-light:#FFF7ED;
+  --kudos:#B45309;--kudos-light:#FFFBEB;
+  --radius:10px;--radius-lg:14px;--radius-xl:18px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.1),0 4px 8px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* SIDEBAR */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;box-shadow:var(--shadow);}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sidebar-logo-icon{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;}
+.sidebar-logo .brand{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.01em;}
+.sidebar-logo .sub{font-size:11px;color:var(--text-muted);}
+.sidebar-week-chip{margin:12px 12px 0;background:linear-gradient(135deg,rgba(76,170,206,.1),rgba(76,170,206,.05));border:1px solid rgba(76,170,206,.2);border-radius:var(--radius);padding:10px 12px;}
+.sidebar-week-chip strong{color:var(--blue);display:block;font-size:12px;font-weight:600;margin-bottom:1px;}
+.sidebar-week-chip span{font-size:11px;color:var(--text-muted);}
+nav{padding:8px 8px;flex:1;overflow-y:auto;}
+.nav-section{padding:12px 12px 4px;font-size:10px;font-weight:600;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted);transition:all .15s;border-radius:8px;margin-bottom:1px;}
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:rgba(76,170,206,.1);color:var(--blue);font-weight:600;}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.sidebar-bottom{padding:12px;border-top:1px solid var(--border);}
+.upload-btn{width:100%;padding:9px;border-radius:var(--radius);background:var(--blue);color:white;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.upload-btn:hover{background:var(--blue-mid);transform:translateY(-1px);box-shadow:var(--shadow-md);}
+
+/* MAIN */
+#main{margin-left:228px;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);position:sticky;top:0;z-index:50;}
+.topbar h1{font-size:16px;font-weight:700;flex:1;color:var(--text);}
+.search-wrap{position:relative;}
+.search-wrap input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 34px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);width:240px;outline:none;transition:all .15s;}
+.search-wrap input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(76,170,206,.1);}
+.search-wrap input::placeholder{color:var(--text-dim);}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:13px;}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:white;border:1px solid var(--border);border-radius:var(--radius);z-index:200;max-height:280px;overflow-y:auto;display:none;box-shadow:var(--shadow-md);}
+.search-result-item{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);}
+.search-result-item:hover{background:var(--bg);}
+.search-result-item .sr-type{font-size:10px;color:var(--blue);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.week-chip{background:rgba(76,170,206,.1);border:1px solid rgba(76,170,206,.2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--blue);font-weight:600;}
+.content{padding:24px 28px;}
+
+/* STAT CARDS */
+.stat-grid{display:grid;gap:14px;margin-bottom:20px;}
+.stat-4{grid-template-columns:repeat(4,1fr);}
+.stat-3{grid-template-columns:repeat(3,1fr);}
+.stat-2{grid-template-columns:repeat(2,1fr);}
+.stat-card{background:var(--surface);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.red::before{background:var(--red);}
+.stat-card.amber::before{background:var(--amber);}
+.stat-card.purple::before{background:var(--purple);}
+.stat-card.teal::before{background:var(--teal);}
+.stat-card.orange::before{background:var(--orange);}
+.stat-card-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+.stat-card-value{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;letter-spacing:-.02em;}
+.stat-card-value.blue{color:var(--blue);}
+.stat-card-value.green{color:var(--green);}
+.stat-card-value.red{color:var(--red);}
+.stat-card-value.amber{color:var(--amber);}
+.stat-card-value.purple{color:var(--purple);}
+.stat-card-value.teal{color:var(--teal);}
+.stat-card-sub{font-size:12px;color:var(--text-muted);margin-top:6px;}
+.stat-card-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.stat-card-badge.green{background:var(--green-light);color:var(--green);}
+.stat-card-badge.red{background:var(--red-light);color:var(--red);}
+.stat-card-badge.amber{background:var(--amber-light);color:var(--amber);}
+.stat-card-badge.gray{background:var(--bg);color:var(--text-muted);}
+
+/* SECTION */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px;}
+.section-title{font-size:14px;font-weight:700;color:var(--text);}
+.section-link{font-size:12px;color:var(--blue);cursor:pointer;font-weight:500;}
+.section-link:hover{text-decoration:underline;}
+
+/* CONCERNS */
+.concerns-list{display:flex;flex-direction:column;gap:6px;}
+.concern-pill{border-radius:8px;overflow:hidden;border:1px solid;cursor:pointer;}
+.concern-pill.red{border-color:var(--red-border);background:var(--red-light);}
+.concern-pill.amber{border-color:var(--amber-border);background:var(--amber-light);}
+.concern-pill-header{display:flex;align-items:center;gap:10px;padding:10px 14px;}
+.concern-pill-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.concern-pill.red .concern-pill-dot{background:var(--red);}
+.concern-pill.amber .concern-pill-dot{background:var(--amber);}
+.concern-pill-title{font-size:13px;font-weight:600;flex:1;}
+.concern-pill.red .concern-pill-title{color:var(--red);}
+.concern-pill.amber .concern-pill-title{color:var(--amber);}
+.concern-pill-chevron{color:var(--text-muted);font-size:11px;transition:transform .15s;}
+.concern-pill-chevron.open{transform:rotate(180deg);}
+.concern-detail{padding:0 14px 12px 32px;font-size:12px;color:var(--text-muted);line-height:1.6;display:none;border-top:1px solid;}
+.concern-pill.red .concern-detail{border-color:var(--red-border);}
+.concern-pill.amber .concern-detail{border-color:var(--amber-border);}
+.concern-detail.open{display:block;}
+.concern-actions{display:flex;gap:8px;margin-top:8px;}
+.concern-btn{font-size:11px;color:var(--blue);cursor:pointer;background:white;border:1px solid var(--blue);border-radius:4px;padding:3px 10px;font-family:'Inter',sans-serif;font-weight:600;}
+.concern-btn:hover{background:rgba(76,170,206,.05);}
+
+/* KUDOS */
+.kudos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.kudos-card{background:var(--kudos-light);border:1px solid var(--amber-border);border-radius:var(--radius-lg);padding:14px;position:relative;overflow:hidden;}
+.kudos-card::before{content:'⭐';position:absolute;top:10px;right:12px;font-size:16px;}
+.kudos-card-name{font-size:14px;font-weight:700;color:var(--kudos);margin-bottom:10px;padding-right:24px;}
+.kudos-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.kudos-stat{background:rgba(255,255,255,.7);border-radius:6px;padding:6px 8px;}
+.kudos-stat-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.kudos-stat-value{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);margin-top:2px;}
+.kudos-csat-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;}
+.kudos-csat-badge.has{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+.kudos-csat-badge.none{background:var(--bg);color:var(--text-dim);border:1px solid var(--border);}
+
+/* TABLE */
+.table-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead{background:var(--bg);}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.badge.red{background:var(--red-light);color:var(--red);border:1px solid var(--red-border);}
+.badge.amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+.badge.green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+.badge.blue{background:rgba(76,170,206,.1);color:var(--blue);border:1px solid rgba(76,170,206,.2);}
+.badge.gray{background:var(--bg);color:var(--text-muted);border:1px solid var(--border);}
+.badge.purple{background:var(--purple-light);color:var(--purple);}
+
+/* AGENT CARDS */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.agent-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.agent-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.agent-card.ok::before{background:var(--green);}
+.agent-card.red::before{background:var(--red);}
+.agent-card.amber::before{background:var(--amber);}
+.agent-card.kudos::before{background:#F59E0B;}
+.agent-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--blue);}
+.agent-card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.agent-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;}
+.agent-avatar.red{background:var(--red);}
+.agent-avatar.amber{background:var(--amber);}
+.agent-avatar.kudos{background:#F59E0B;}
+.agent-card-name{font-size:14px;font-weight:600;flex:1;}
+.agent-card-status{font-size:16px;}
+.agent-csat-chip{font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;font-family:'DM Mono',monospace;}
+.agent-csat-chip.has{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+.agent-csat-chip.none{background:var(--bg);color:var(--text-dim);border:1px solid var(--border);}
+.agent-metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.agent-metric{background:var(--bg);border-radius:6px;padding:7px 10px;border:1px solid var(--border);}
+.agent-metric-label{font-size:9px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.agent-metric-value{font-size:12px;font-weight:700;margin-top:2px;font-family:'DM Mono',monospace;color:var(--text);}
+.agent-metric-value.red{color:var(--red);}
+.agent-metric-value.amber{color:var(--amber);}
+.agent-card-footer{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--blue);display:flex;align-items:center;gap:4px;font-weight:500;}
+
+/* AGENT DETAIL */
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer;margin-bottom:20px;padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-weight:500;transition:all .15s;box-shadow:var(--shadow);}
+.back-btn:hover{color:var(--blue);border-color:var(--blue);}
+.agent-detail-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);}
+.agent-detail-avatar{width:56px;height:56px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;flex-shrink:0;}
+.agent-detail-name{font-size:20px;font-weight:700;}
+.agent-detail-week{font-size:13px;color:var(--text-muted);margin-top:2px;}
+.agent-detail-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.raw-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--blue);cursor:pointer;background:rgba(76,170,206,.08);border:1px solid rgba(76,170,206,.2);border-radius:6px;padding:5px 12px;font-weight:600;transition:all .15s;}
+.raw-btn:hover{background:rgba(76,170,206,.15);}
+
+/* UPLOAD MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:white;border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:translateY(16px);transition:transform .2s;box-shadow:var(--shadow-lg);}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:6px;}
+.modal p{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);outline:none;}
+.form-input:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(76,170,206,.1);}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:12px;background:var(--bg);}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--blue);background:rgba(76,170,206,.04);}
+.drop-zone-icon{font-size:26px;margin-bottom:8px;}
+.drop-zone-text{font-size:13px;color:var(--text-muted);}
+.drop-zone-hint{font-size:11px;color:var(--blue);margin-top:5px;font-weight:600;}
+.file-list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.file-list-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;}
+.clear-btn{font-size:11px;color:var(--red);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;}
+.file-list{max-height:140px;overflow-y:auto;margin-bottom:8px;}
+.file-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:3px;font-size:12px;border:1px solid var(--border);}
+.file-item .fi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-item .fi-type{color:var(--blue);font-weight:600;font-size:10px;text-transform:uppercase;flex-shrink:0;}
+.file-item .fi-remove{cursor:pointer;color:var(--text-dim);padding:0 4px;}
+.file-item .fi-remove:hover{color:var(--red);}
+.file-count{font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+.file-count span{color:var(--blue);font-weight:600;}
+.progress-wrap{margin:10px 0;display:none;}
+.progress-bar-bg{background:var(--bg);border-radius:4px;height:5px;overflow:hidden;}
+.progress-bar{height:100%;background:var(--blue);border-radius:4px;transition:width .3s;}
+.progress-label{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:center;}
+.upload-success{background:var(--green-light);border:1px solid var(--green-border);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--green);margin-top:10px;display:none;font-weight:500;}
+.upload-error{background:var(--red-light);border:1px solid var(--red-border);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--red);margin-top:10px;display:none;}
+.modal-actions{display:flex;gap:10px;margin-top:14px;}
+.btn{padding:9px 18px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--blue);color:white;flex:1;}
+.btn-primary:hover{background:var(--blue-mid);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-ghost{background:var(--bg);color:var(--text-muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);}
+
+/* MISC */
+.tab-bar{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:20px;}
+.tab{padding:8px 14px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.tab:hover{color:var(--text);}
+.empty-state{text-align:center;padding:60px 20px;background:var(--surface);border-radius:var(--radius-xl);border:1px solid var(--border);}
+.empty-icon{font-size:44px;margin-bottom:14px;}
+.empty-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+.empty-desc{font-size:14px;color:var(--text-muted);max-width:380px;margin:0 auto 20px;line-height:1.6;}
+.page{display:none;}
+.page.active{display:block;}
+.mono{font-family:'DM Mono',monospace;}
+.mt-4{margin-top:16px;}
+.trend-flags{display:flex;flex-wrap:wrap;gap:4px;}
+.no-data{font-size:13px;color:var(--text-muted);padding:16px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);}
+.info-note{background:rgba(76,170,206,.06);border:1px solid rgba(76,170,206,.15);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text-muted);margin-top:8px;}
+.info-note strong{color:var(--blue);}
+/* Chart bar */
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:40px;margin-top:10px;}
+.mini-bar{flex:1;border-radius:3px 3px 0 0;min-height:3px;transition:opacity .15s;}
+.mini-bar:hover{opacity:.7;}
+@media(max-width:1100px){.stat-4{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){#main{margin-left:0;}.stat-4,.stat-3,.stat-2{grid-template-columns:1fr;}}
+/* KUDOS v2 */
+.kudos-highlight{background:var(--kudos-light);border:1px solid var(--amber-border);border-radius:var(--radius-lg);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+/* Sync pulse */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.syncing{animation:pulse 1.2s infinite;}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">XS</div>
+    <div><div class="brand">Xero Shoes</div><div class="sub">CX Dashboard</div></div>
+  </div>
+  <div class="sidebar-week-chip">
+    <strong id="sidebarWeekLabel">No data loaded</strong>
+    <span id="sidebarWeekSub">Upload exports to begin</span>
+  </div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="showPage('snapshot')" id="nav-snapshot"><span class="icon">📊</span> Weekly Snapshot</div>
+    <div class="nav-item" onclick="showPage('team')" id="nav-team"><span class="icon">👥</span> Team Performance</div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="showPage('ai')" id="nav-ai"><span class="icon">🤖</span> AI & Gorgias</div>
+    <div class="nav-item" onclick="showPage('returns')" id="nav-returns"><span class="icon">📦</span> Returns & Warranties</div>
+    <div class="nav-item" onclick="showPage('themes')" id="nav-themes"><span class="icon">💬</span> Customer Themes</div>
+    <div class="nav-section">History</div>
+    <div class="nav-item" onclick="showPage('trends')" id="nav-trends"><span class="icon">📈</span> Trends</div>
+    <div class="nav-item" onclick="showPage('helpcenter')" id="nav-helpcenter"><span class="icon">🏥</span> Help Center & Fields</div>
+    <div class="nav-item" onclick="showPage('raw')" id="nav-raw"><span class="icon">🗂️</span> Raw Data</div>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="upload-btn" onclick="openUpload()">⬆ Upload New Week</button>
+  </div>
+</div>
+
+<div id="main">
+  <div class="topbar">
+    <h1 id="pageTitle">Weekly Snapshot</h1>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="globalSearch" placeholder="Search agent, product, week..." oninput="handleSearch(this.value)">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <span class="week-chip" id="topbarWeek">No data</span>
+  </div>
+  <div class="content">
+    <div class="page active" id="page-snapshot"><div id="snapshotContent"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data loaded yet</div><div class="empty-desc">Upload your weekly exports to populate the dashboard.</div><button class="btn btn-primary" onclick="openUpload()" style="display:inline-block;width:auto">Upload Exports</button></div></div></div>
+    <div class="page" id="page-team"><div id="teamContent"><div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No data loaded</div></div></div></div>
+    <div class="page" id="page-ai"><div id="aiContent"><div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">No data loaded</div></div></div></div>
+    <div class="page" id="page-returns"><div id="returnsContent"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No data loaded</div></div></div></div>
+    <div class="page" id="page-themes"><div id="themesContent"><div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">No theme data yet</div><div class="empty-desc">Upload a CSAT export or ticket export from Gorgias to see customer themes.</div></div></div></div>
+    <div class="page" id="page-helpcenter"><div id="helpcenterContent"><div class="empty-state"><div class="empty-icon">🏥</div><div class="empty-title">No data loaded</div></div></div></div>
+    <div class="page" id="page-trends"><div id="trendsContent"><div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No trend data yet</div><div class="empty-desc">Upload 2+ weeks of data to see trends.</div></div></div></div>
+    <div class="page" id="page-raw"><div id="rawContent"><div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-title">No data loaded</div></div></div></div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <h2>⬆ Upload Weekly Exports</h2>
+    <p>Drop ZIP files or CSVs — drop multiple times to add more files.</p>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="uploadPassword" placeholder="Enter upload password">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Week Label</label>
+      <input type="text" class="form-input" id="weekLabel" placeholder="e.g. Mar 30 – Apr 5, 2026" oninput="checkWeekExists()">
+      <div id="weekExistsNote" style="font-size:11px;color:var(--blue);margin-top:4px;display:none">✓ This week already has data — new files will be <strong>merged in</strong>, not overwritten.</div>
+    </div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-text">Drop files here or click to browse</div>
+      <div class="drop-zone-hint">✅ ZIP files and CSVs — drop multiple times</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".csv,.zip" style="display:none" onchange="handleFiles(this.files)">
+    <div id="fileListWrap" style="display:none">
+      <div class="file-list-header">
+        <span class="file-list-title">Files Queued</span>
+        <button class="clear-btn" onclick="clearFiles()">✕ Clear all</button>
+      </div>
+      <div class="file-list" id="fileList"></div>
+      <div class="file-count" id="fileCount"></div>
+    </div>
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">Processing...</div>
+    </div>
+    <div class="upload-success" id="uploadSuccess">✅ Data uploaded! Dashboard updating...</div>
+    <div class="upload-error" id="uploadError"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeUpload()">Cancel</button>
+      <button class="btn btn-primary" id="uploadSubmit" onclick="processUpload()">Upload & Merge</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASS='xerocx123';
+const T={frtGreen:24*60,frtAmber:48*60,resGreen:24*60,resAmber:48*60,otGreen:50,otAmber:35,slaGreen:80,slaAmber:70,csatGreen:4.5,csatAmber:4.0,rrWarn:15,rrHigh:20,phoneAns:80,phoneAnsAmber:65};
+const STORE_KEY='xero_cx_v7';
+const ROSTER=['Kelly','Kathy','Leo','Brooke','Greg','Jordan','Jake','Izzy','Jan','Kylee','Vanessa','Jori','Ross'];
+// Agent schedule config — net email hours after breaks (lunch + 2x15min = 1hr deducted)
+const AGENT_SCHEDULE={
+  Kelly:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:true,note:'11-4 + evening shift'},
+  Kathy:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:5,counted:true,note:'6hr/day all email'},
+  Leo:{days:['Thu','Fri','Sat','Sun','Mon'],emailHoursPerDay:4,counted:true,note:'Thurs-Mon'},
+  Brooke:{days:['Thu','Fri','Sun','Mon','Tue'],emailHoursPerDay:4,counted:true,note:'Thurs-Fri + Sun-Tues'},
+  Greg:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:true,note:'Mon-Fri'},
+  Jordan:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:true,note:'Mon-Fri'},
+  Jake:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:true,note:'Mon-Fri'},
+  Izzy:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:true,note:'Mon-Fri'},
+  Jan:{days:['Mon','Tue','Wed','Thu'],emailHoursPerDay:3.5,counted:true,note:'Mon-Thurs EU, ~4-5hr email'},
+  Kylee:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:false,note:'Should answer some'},
+  Vanessa:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:false,note:'Should answer some'},
+  Jori:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:false,note:'Should answer some'},
+  Ross:{days:['Mon','Tue','Wed','Thu','Fri'],emailHoursPerDay:4,counted:false,note:'Should answer some'},
+};
+const EMAIL_PER_HOUR_TARGET=12;
+const SLA_TARGETS={email:24*60,social:10,chat:3,teamAvgFRT:3};
+let state={weeks:[],currentWeek:null,selectedAgent:null,currentPage:'snapshot',teamSearch:''};
+let uploadedFiles=[];
+
+// ── SHARED STORAGE: GitHub Gist ──
+// The Gist ID below stores your dashboard data publicly (read) but write-protected by your password.
+// Colleagues visiting the URL will automatically see your latest uploaded data.
+const GIST_ID='xero_cx_dashboard_data'; // placeholder — see setup instructions
+let _syncInProgress=false;
+
+function loadState(){
+  // 1. Load from localStorage immediately (instant paint)
+  try{const s=localStorage.getItem(STORE_KEY);if(s){const d=JSON.parse(s);state.weeks=d.weeks||[];if(state.weeks.length)state.currentWeek=state.weeks[0];renderCurrentPage();}}catch(e){}
+  // 2. Then fetch latest shared data from GitHub
+  _fetchSharedData();
+}
+
+function saveState(){
+  // Save locally
+  try{localStorage.setItem(STORE_KEY,JSON.stringify({weeks:state.weeks}));}catch(e){}
+  // Push to shared storage (GitHub raw file via your repo)
+  _pushSharedData();
+}
+
+async function _fetchSharedData(){
+  try{
+    // Fetch from GitHub raw — cache-busted so colleagues always get fresh data
+    const url='https://raw.githubusercontent.com/savannahxero/xero-cx-dashboard/main/dashboard-data.json?t='+Date.now();
+    const res=await fetch(url);
+    if(!res.ok)return; // no shared data yet, that's fine
+    const d=await res.json();
+    if(!d||!d.weeks)return;
+    // Merge: keep any local weeks not in shared, but shared wins for same labels
+    const sharedLabels=new Set(d.weeks.map(w=>w.label));
+    const localOnly=state.weeks.filter(w=>!sharedLabels.has(w.label));
+    state.weeks=[...d.weeks,...localOnly];
+    if(d.weeks.length&&(!state.currentWeek||sharedLabels.has(state.currentWeek?.label)))state.currentWeek=d.weeks[0];
+    try{localStorage.setItem(STORE_KEY,JSON.stringify({weeks:state.weeks}));}catch(e){}
+    updateSidebarWeek();renderCurrentPage();
+  }catch(e){/* offline or no shared file yet — that's OK */}
+}
+
+async function _pushSharedData(){
+  if(_syncInProgress)return;_syncInProgress=true;
+  // Show a subtle sync indicator
+  const chip=document.getElementById('topbarWeek');if(chip)chip.textContent+=' 🔄';
+  try{
+    // We push via GitHub Contents API using a PAT stored in the password field
+    // Format: if password contains '|', split into xerocx123|ghp_yourtoken
+    const rawPass=document.getElementById('uploadPassword')?.value||'';
+    const parts=rawPass.split('|');
+    const ghToken=parts[1]?.trim();
+    if(!ghToken){_syncInProgress=false;if(chip)chip.textContent=chip.textContent.replace(' 🔄','');return;}
+    const payload=JSON.stringify({weeks:state.weeks});
+    const encoded=btoa(unescape(encodeURIComponent(payload)));
+    // Get current SHA first
+    const shaRes=await fetch('https://api.github.com/repos/savannahxero/xero-cx-dashboard/contents/dashboard-data.json',{headers:{Authorization:'token '+ghToken}});
+    const shaData=shaRes.ok?await shaRes.json():{};
+    const body={message:'Dashboard update '+new Date().toLocaleString(),content:encoded};
+    if(shaData.sha)body.sha=shaData.sha;
+    await fetch('https://api.github.com/repos/savannahxero/xero-cx-dashboard/contents/dashboard-data.json',{method:'PUT',headers:{Authorization:'token '+ghToken,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  }catch(e){/* silent fail */}
+  _syncInProgress=false;
+  updateSidebarWeek();
+}
+
+const pageTitles={snapshot:'Weekly Snapshot',team:'Team Performance',ai:'AI & Gorgias Instance',returns:'Returns & Warranties',themes:'Customer Themes',helpcenter:'Help Center & Ticket Fields',trends:'Trends',raw:'Raw Data'};
+function showPage(p,extra){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  document.getElementById('pageTitle').textContent=pageTitles[p];
+  state.currentPage=p;
+  if(p!=='team')state.selectedAgent=null;
+  renderCurrentPage(extra);
+}
+function renderCurrentPage(extra){
+  const p=state.currentPage;
+  if(p==='snapshot')renderSnapshot();
+  else if(p==='team')renderTeam(extra);
+  else if(p==='ai')renderAI();
+  else if(p==='returns')renderReturns();
+  else if(p==='trends')renderTrends();
+  else if(p==='themes')renderThemes();
+  else if(p==='raw')renderRaw(extra);
+  else if(p==='helpcenter')renderHelpCenter();
+}
+
+// HELPERS
+function badge(t,c){return`<span class="badge ${c}">${t}</span>`;}
+function matchAgent(n){for(const r of ROSTER){if(String(n).toLowerCase().includes(r.toLowerCase()))return r;}return null;}
+function si(c){return c==='red'?'🔴':c==='amber'?'🟡':c==='green'?'✅':'—';}
+function toMins(s){
+  if(!s||s==='—'||s==='-')return null;s=String(s);let t=0;
+  const mo=s.match(/(\d+)\s*mo/);const d=s.match(/(\d+)\s*d/);const h=s.match(/(\d+)\s*h/);const m=s.match(/(\d+)\s*m/);
+  if(mo)t+=parseInt(mo[1])*30*24*60;if(d)t+=parseInt(d[1])*24*60;if(h)t+=parseInt(h[1])*60;if(m)t+=parseInt(m[1]);
+  return t>0?t:null;
+}
+function minsToStr(m){
+  if(m===null||isNaN(m))return'—';
+  if(m>=24*60){const d=Math.floor(m/(24*60));const h=Math.floor((m%(24*60))/60);return`${d}d ${h}h`;}
+  if(m>=60){const h=Math.floor(m/60);const mm=m%60;return`${h}h ${mm}m`;}
+  return`${Math.round(m)}m`;
+}
+function getAgentFlag(a){
+  const frt=String(a['First response time']||'—');const res=String(a['Resolution time']||'—');
+  if(frt.includes('mo')||(frt.includes('d')&&parseInt(frt)>=7))return'red';
+  if(frt.includes('d')&&parseInt(frt)>=2)return'amber';
+  if(res.includes('mo'))return'red';
+  if((frt.includes('m')&&!frt.includes('d')&&!frt.includes('h'))||(frt.includes('h')&&!frt.includes('d')&&parseInt(frt)<2))return'kudos';
+  return'ok';
+}
+function getCSAT(a){const v=parseFloat(String(a['Average CSAT']||'').replace('-',''));return isNaN(v)||v<=0?null:v;}
+function gorgiasLink(ticketId){
+  return`https://app.gorgias.com/tickets/${ticketId}`;
+}
+function calcTeamAvgs(agents){
+  const roster=agents.filter(a=>matchAgent(a.Agent)&&!String(a.Agent).includes('Miles'));
+  const frts=roster.map(a=>toMins(a['First response time'])).filter(v=>v!==null);
+  const ress=roster.map(a=>toMins(a['Resolution time'])).filter(v=>v!==null);
+  const ots=roster.map(a=>{const v=parseFloat(String(a['One touch tickets']||'').replace('%',''));return isNaN(v)?null:v;}).filter(v=>v!==null);
+  const csats=roster.map(a=>getCSAT(a)).filter(v=>v!==null);
+  // Use Gorgias's own Average row if present
+  const avgRow=agents.find(a=>String(a.Agent).toLowerCase()==='average');
+  return{
+    avgFRT:avgRow&&avgRow['First response time']&&avgRow['First response time']!=='-'?avgRow['First response time']:(frts.length?minsToStr(Math.round(frts.reduce((a,b)=>a+b,0)/frts.length)):'—'),
+    avgFRTMins:frts.length?Math.round(frts.reduce((a,b)=>a+b,0)/frts.length):null,
+    avgRes:avgRow&&avgRow['Resolution time']&&avgRow['Resolution time']!=='-'?avgRow['Resolution time']:(ress.length?minsToStr(Math.round(ress.reduce((a,b)=>a+b,0)/ress.length)):'—'),
+    avgResMins:ress.length?Math.round(ress.reduce((a,b)=>a+b,0)/ress.length):null,
+    avgOT:avgRow&&avgRow['One touch tickets']&&avgRow['One touch tickets']!=='-'?avgRow['One touch tickets']:(ots.length?(ots.reduce((a,b)=>a+b,0)/ots.length).toFixed(1)+'%':'—'),
+    avgOTVal:ots.length?ots.reduce((a,b)=>a+b,0)/ots.length:null,
+    avgCSAT:avgRow&&avgRow['Average CSAT']&&avgRow['Average CSAT']!=='-'?parseFloat(avgRow['Average CSAT']):(csats.length?parseFloat((csats.reduce((a,b)=>a+b,0)/csats.length).toFixed(2)):null),
+    count:roster.length
+  };
+}
+function updateSidebarWeek(){
+  if(state.currentWeek){
+    document.getElementById('sidebarWeekLabel').textContent=state.currentWeek.label||'Current Week';
+    document.getElementById('sidebarWeekSub').textContent=`${state.weeks.length} week(s) loaded`;
+    document.getElementById('topbarWeek').textContent=state.currentWeek.label||'Current Week';
+  }
+}
+
+// SNAPSHOT
+function renderSnapshot(){
+  const el=document.getElementById('snapshotContent');
+  if(!state.currentWeek){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data loaded yet</div><div class="empty-desc">Upload your weekly exports to populate the dashboard.</div><button class="btn btn-primary" onclick="openUpload()" style="display:inline-block;width:auto">Upload Exports</button></div>`;return;}
+  const w=state.currentWeek;
+  const s=w.shopify||{};const g=w.gorgias||{};const ai=w.ai||{};
+  const agents=g.agents||[];const avgs=calcTeamAvgs(agents);
+  const wkSales=s.weekSales||0;const wkReturns=s.weekReturns||0;
+  const marchReturns=s.marchReturns||0;const marchSales=s.marchSales||0;
+  const rr=wkSales>0?(wkReturns/wkSales*100):0;
+  const rrColor=rr>20?'red':rr>15?'amber':'green';
+  const slaAch=parseFloat(g.slaAchievement||0);
+  const slaColor=slaAch>=80?'green':slaAch>=70?'amber':(slaAch>0?'red':'gray');
+  const frtMins=avgs.avgFRTMins;
+  const frtColor=frtMins===null?'gray':frtMins<=1440?'green':frtMins<=2880?'amber':'red';
+  const resMins=avgs.avgResMins;
+  const resColor=resMins===null?'gray':resMins<=1440?'green':resMins<=2880?'amber':'red';
+  const otVal=avgs.avgOTVal;
+  const otColor=otVal===null?'gray':otVal>=50?'green':otVal>=35?'amber':'red';
+  const emailCh=(g.channels||[]).find(c=>c.Channel==='email');
+  const csatScore=emailCh?parseFloat(emailCh['Average CSAT']||0):0;
+  const csatColor=csatScore>=T.csatGreen?'green':csatScore>=T.csatAmber?'amber':(csatScore>0?'red':'gray');
+  const aiRate=parseFloat(ai.automationRate||0)*100;
+  const aiColor=aiRate>=40?'green':aiRate>=30?'amber':(aiRate>0?'red':'gray');
+
+  el.innerHTML=`
+    <div class="stat-grid stat-4">
+      <div class="stat-card blue">
+        <div class="stat-card-label">Week Sales</div>
+        <div class="stat-card-value blue">$${(wkSales/1000).toFixed(1)}K</div>
+        <div class="stat-card-sub">${w.label}</div>
+        ${s.daily&&s.daily.length?`<div class="mini-chart">${s.daily.slice(-7).map(d=>{const v=d.sales;const max=Math.max(...s.daily.slice(-7).map(x=>x.sales));const h=max>0?Math.max(4,Math.round((v/max)*36)):4;return`<div class="mini-bar" style="height:${h}px;background:rgba(76,170,206,.4)"></div>`;}).join('')}</div>`:''}
+      </div>
+      <div class="stat-card ${rrColor}">
+        <div class="stat-card-label">Week Return Rate</div>
+        <div class="stat-card-value ${rrColor}">${rr.toFixed(1)}%</div>
+        <div class="stat-card-sub">$${(wkReturns/1000).toFixed(1)}K returned</div>
+        <div class="stat-card-badge ${rrColor}">${si(rrColor)} Target ≤15%</div>
+      </div>
+      <div class="stat-card ${slaColor}">
+        <div class="stat-card-label">SLA Achievement</div>
+        <div class="stat-card-value ${slaColor}">${slaAch>0?slaAch.toFixed(1)+'%':'—'}</div>
+        <div class="stat-card-sub">${g.slaBreaches||0} breaches this week</div>
+        <div class="stat-card-badge ${slaColor}">${si(slaColor)} Target ≥80%</div>
+      </div>
+      <div class="stat-card ${csatColor}">
+        <div class="stat-card-label">Team CSAT</div>
+        <div class="stat-card-value ${csatColor}">${csatScore>0?csatScore.toFixed(2):avgs.avgCSAT?avgs.avgCSAT.toFixed(2):'—'}</div>
+        <div class="stat-card-sub">${(()=>{const milesA=(g.agents||[]).find(a=>String(a.Agent||'').includes('Miles'));const mc=milesA?getCSAT(milesA):null;const tc=csatScore>0?csatScore:avgs.avgCSAT;if(mc&&tc){const diff=(mc-tc);return'Miles: '+mc.toFixed(2)+' ('+(diff>=0?'+':'')+diff.toFixed(2)+' vs team)';}return csatScore>0?'Email channel':'Enable in Gorgias';})()}</div>
+        <div class="stat-card-badge ${csatScore>0?csatColor:'gray'}">${csatScore>0?si(csatColor)+' /5 target':'Enable in Gorgias'}</div>
+      </div>
+    </div>
+
+    <div class="stat-grid stat-4">
+      <div class="stat-card ${frtColor}">
+        <div class="stat-card-label">Avg First Response</div>
+        <div class="stat-card-value ${frtColor}">${avgs.avgFRT}</div>
+        <div class="stat-card-badge ${frtColor}">${si(frtColor)} Target &lt;24h</div>
+      </div>
+      <div class="stat-card ${resColor}">
+        <div class="stat-card-label">Avg Resolution Time</div>
+        <div class="stat-card-value ${resColor}">${avgs.avgRes}</div>
+        <div class="stat-card-badge ${resColor}">${si(resColor)} Target &lt;24h</div>
+      </div>
+      <div class="stat-card ${otColor}">
+        <div class="stat-card-label">Avg One-Touch Rate</div>
+        <div class="stat-card-value ${otColor}">${avgs.avgOT}</div>
+        <div class="stat-card-badge ${otColor}">${si(otColor)} Target ≥50%</div>
+      </div>
+      <div class="stat-card ${aiColor}">
+        <div class="stat-card-label">AI Automation Rate</div>
+        <div class="stat-card-value ${aiColor}">${aiRate>0?aiRate.toFixed(0)+'%':'—'}</div>
+        <div class="stat-card-sub">${ai.interactions||'—'} interactions</div>
+        <div class="stat-card-badge ${aiColor}">${si(aiColor)} Target ≥40%</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+      <div>
+        <div class="section-header">
+          <div class="section-title">⚠️ Concerns This Week</div>
+          <span class="section-link" onclick="showPage('team')">View Team →</span>
+        </div>
+        ${renderConcernPills(w)}
+      </div>
+      <div>
+        <div class="section-header">
+          <div class="section-title">⭐ Kudos & Highlights</div>
+          <span class="section-link" onclick="showPage('team')">View All →</span>
+        </div>
+        ${renderKudosCards(w,agents)}
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:20px">
+      <div class="section-title">Channel Response Times</div>
+      <span class="section-link" onclick="goToRaw('raw-channels')">Raw data →</span>
+    </div>
+    ${renderChannelTable(w)}
+  `;
+}
+
+function renderConcernPills(w){
+  const concerns=w.concerns||[];
+  if(!concerns.length)return`<div class="no-data">✅ No concerns this week — all metrics within target ranges.</div>`;
+  return`<div class="concerns-list">${concerns.map((c,i)=>`
+    <div class="concern-pill ${c.level}" onclick="toggleConcern(${i})">
+      <div class="concern-pill-header">
+        <div class="concern-pill-dot"></div>
+        <div class="concern-pill-title">${c.shortTitle}</div>
+        <span class="concern-pill-chevron" id="chev-${i}">▾</span>
+      </div>
+      <div class="concern-detail" id="cd-${i}">
+        ${c.detail}
+        <div class="concern-actions">
+          ${c.agentName?`<button class="concern-btn" onclick="openAgent('${c.agentName}');event.stopPropagation()">→ ${c.agentName}'s profile</button>`:''}
+          ${c.page?`<button class="concern-btn" onclick="showPage('${c.page}');event.stopPropagation()">→ ${pageTitles[c.page]}</button>`:''}
+          ${c.rawTab?`<button class="concern-btn" onclick="goToRaw('${c.rawTab}');event.stopPropagation()">→ Raw data</button>`:''}
+        </div>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+function toggleConcern(i){
+  const det=document.getElementById('cd-'+i);const chev=document.getElementById('chev-'+i);if(!det)return;
+  const open=det.classList.contains('open');
+  document.querySelectorAll('.concern-detail').forEach(d=>d.classList.remove('open'));
+  document.querySelectorAll('.concern-pill-chevron').forEach(c=>c.classList.remove('open'));
+  if(!open){det.classList.add('open');chev&&chev.classList.add('open');}
+}
+
+function renderKudosCards(w,agents){
+  const cards=[];
+  // 1. Highest one-touch time
+  const otCandidates=agents.filter(a=>matchAgent(a.Agent)).map(a=>{const v=parseFloat(String(a['One touch tickets']||'').replace('%',''));return{name:matchAgent(a.Agent),val:v,raw:a['One touch tickets']};}).filter(c=>!isNaN(c.val)&&c.val>0).sort((a,b)=>b.val-a.val);
+  if(otCandidates[0])cards.push({icon:'⚡',label:'Highest One-Touch',name:otCandidates[0].name,stat:otCandidates[0].raw,color:'purple'});
+  // 2. Highest tickets + CSAT combined
+  const qtCandidates=agents.filter(a=>matchAgent(a.Agent)).map(a=>{const t=parseInt(a['Tickets replied']||0);const c=getCSAT(a);return{name:matchAgent(a.Agent),tickets:t,csat:c,raw:a['Tickets replied']};}).filter(c=>c.tickets>0&&c.csat!==null).sort((a,b)=>(b.csat*100+b.tickets)-(a.csat*100+a.tickets));
+  if(qtCandidates[0])cards.push({icon:'🏆',label:'Volume + Quality',name:qtCandidates[0].name,stat:qtCandidates[0].raw+' tickets · CSAT '+qtCandidates[0].csat.toFixed(2),color:'green'});
+  // 3. Fastest FRT (email agents only, exclude Miles)
+  const frtCandidates=agents.filter(a=>matchAgent(a.Agent)).map(a=>{const m=toMins(a['First response time']);return{name:matchAgent(a.Agent),mins:m,raw:a['First response time']};}).filter(c=>c.mins!==null&&c.mins>0).sort((a,b)=>a.mins-b.mins);
+  if(frtCandidates[0])cards.push({icon:'🚀',label:'Fastest First Response',name:frtCandidates[0].name,stat:frtCandidates[0].raw,color:'blue'});
+  // 4. Fastest resolution
+  const resCandidates=agents.filter(a=>matchAgent(a.Agent)).map(a=>{const m=toMins(a['Resolution time']);return{name:matchAgent(a.Agent),mins:m,raw:a['Resolution time']};}).filter(c=>c.mins!==null&&c.mins>0).sort((a,b)=>a.mins-b.mins);
+  if(resCandidates[0]&&resCandidates[0].name!==frtCandidates[0]?.name)cards.push({icon:'✅',label:'Fastest Resolution',name:resCandidates[0].name,stat:resCandidates[0].raw,color:'teal'});
+  // 5. CSAT snippets from ticket export
+  const csatSnippets=(w.gorgias||{}).csatFromTickets||[];
+  const fiveStars=csatSnippets.filter(t=>t.score>=5).slice(0,3);
+  if(fiveStars.length)cards.push({icon:'⭐',label:'5-Star Moments',name:fiveStars.map(t=>t.agent).filter((v,i,a)=>a.indexOf(v)===i).slice(0,2).join(', ')||'Team',stat:fiveStars.length+' five-star ratings this week',color:'kudos',snippets:fiveStars});
+  // 6. Team improvement card
+  const prevWeek=state.weeks[1];
+  if(prevWeek){
+    const prevAvgs=calcTeamAvgs((prevWeek.gorgias||{}).agents||[]);
+    const curAvgs=calcTeamAvgs(agents);
+    const improvements=[];
+    if(curAvgs.avgFRTMins&&prevAvgs.avgFRTMins&&curAvgs.avgFRTMins<prevAvgs.avgFRTMins)improvements.push('FRT ↓ '+minsToStr(prevAvgs.avgFRTMins-curAvgs.avgFRTMins));
+    if(curAvgs.avgResMins&&prevAvgs.avgResMins&&curAvgs.avgResMins<prevAvgs.avgResMins)improvements.push('Resolution ↓ '+minsToStr(prevAvgs.avgResMins-curAvgs.avgResMins));
+    if(curAvgs.avgOTVal&&prevAvgs.avgOTVal&&curAvgs.avgOTVal>prevAvgs.avgOTVal)improvements.push('One-Touch ↑ '+(curAvgs.avgOTVal-prevAvgs.avgOTVal).toFixed(1)+'%');
+    if(improvements.length)cards.push({icon:'📈',label:'Team Improved',name:'Whole Team',stat:improvements.join(' · '),color:'green'});
+  }
+  if(!cards.length)return`<div class="no-data">No kudos data — upload agent metrics to surface highlights.</div>`;
+  return`<div style="display:flex;flex-direction:column;gap:8px">${cards.map(k=>`
+    <div style="background:var(--kudos-light);border:1px solid var(--amber-border);border-radius:var(--radius-lg);padding:12px 14px;display:flex;align-items:center;gap:12px;position:relative">
+      <div style="font-size:22px;flex-shrink:0">${k.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">${k.label}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--kudos)">${k.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:1px;font-family:'DM Mono',monospace">${k.stat}</div>
+        ${k.snippets?'<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">'+k.snippets.map(s=>`<span style="font-size:10px;background:rgba(255,255,255,.8);border:1px solid var(--amber-border);border-radius:8px;padding:1px 7px;color:var(--kudos)">${s.agent||'—'}</span>`).join('')+'</div>':''}
+      </div>
+      <div style="font-size:10px;background:rgba(255,255,255,.7);border:1px solid var(--amber-border);border-radius:8px;padding:2px 8px;font-weight:700;color:var(--kudos);flex-shrink:0">${k.color==='green'?'🟢':k.color==='blue'?'🔵':k.color==='purple'?'🟣':k.color==='teal'?'🟦':'⭐'}</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderChannelTable(w){
+  const ch=(w.gorgias||{}).channels||[];
+  if(!ch.length)return`<div class="no-data">No channel data. Upload Gorgias channels export.</div>`;
+  const key=ch.filter(c=>['email','chat','aircall','facebook','instagram-direct-message'].includes(c.Channel));
+  return`<div class="table-card"><div class="table-wrap"><table><thead><tr><th>Channel</th><th>Tickets</th><th>First Response</th><th>Resolution</th><th>CSAT</th><th>Status</th></tr></thead><tbody>
+    ${key.map(c=>{
+      const frt=c['First response time']||'—';const csat=c['Average CSAT']||'—';
+      let st='gray',stxt='—';
+      if(frt!=='—'&&frt!=='-'){if(frt.includes('d')&&parseInt(frt)>=3){st='red';stxt='🔴 Critical';}else if(frt.includes('d')){st='amber';stxt='🟡 Watch';}else{st='green';stxt='✅ OK';}}
+      return`<tr><td><strong>${c.Channel}</strong></td><td>${c['Created tickets']||'—'}</td><td class="mono">${frt}</td><td class="mono">${c['Resolution time']||'—'}</td><td>${csat!=='-'&&csat!=='—'?badge(csat+' ⭐','green'):badge('—','gray')}</td><td>${badge(stxt,st)}</td></tr>`;
+    }).join('')}
+  </tbody></table></div></div>`;
+}
+
+// TEAM
+function renderTeam(agentName){
+  const el=document.getElementById('teamContent');
+  if(!state.currentWeek){el.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No data loaded</div></div>`;return;}
+  if(agentName)state.selectedAgent=agentName;
+  if(state.selectedAgent){renderAgentDetail(el);return;}
+  const agents=(state.currentWeek.gorgias||{}).agents||[];
+  const roster=agents.filter(a=>matchAgent(a.Agent));
+  const filtered=state.teamSearch?roster.filter(a=>String(a.Agent).toLowerCase().includes(state.teamSearch.toLowerCase())):roster;
+  const avgs=calcTeamAvgs(agents);
+  const emailCh=((state.currentWeek.gorgias||{}).channels||[]).find(c=>c.Channel==='email');
+  const teamCSAT=emailCh&&emailCh['Average CSAT']!=='-'?emailCh['Average CSAT']:null;
+
+  el.innerHTML=`
+    <div class="stat-grid stat-4" style="margin-bottom:20px">
+      <div class="stat-card blue"><div class="stat-card-label">Team Avg FRT</div><div class="stat-card-value blue">${avgs.avgFRT}</div><div class="stat-card-sub">${avgs.count} agents</div></div>
+      <div class="stat-card teal"><div class="stat-card-label">Team Avg Resolution</div><div class="stat-card-value teal">${avgs.avgRes}</div></div>
+      <div class="stat-card purple"><div class="stat-card-label">Team One-Touch Avg</div><div class="stat-card-value purple">${avgs.avgOT}</div><div class="stat-card-sub">Target ≥50%</div></div>
+      <div class="stat-card ${avgs.avgCSAT&&avgs.avgCSAT>=4?'green':avgs.avgCSAT&&avgs.avgCSAT>=3?'amber':'blue'}">
+        <div class="stat-card-label">Team CSAT</div>
+        <div class="stat-card-value ${avgs.avgCSAT&&avgs.avgCSAT>=4?'green':avgs.avgCSAT&&avgs.avgCSAT>=3?'amber':'blue'}">${avgs.avgCSAT?avgs.avgCSAT.toFixed(2):teamCSAT?teamCSAT:'—'}</div>
+        <div class="stat-card-sub">${avgs.avgCSAT?'Per-agent avg':teamCSAT?'Email channel':'Enable in Gorgias'}</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text-muted);font-weight:500">${roster.length} agents — ${state.currentWeek.label} — <strong style="color:var(--blue)">Click any card</strong> for full detail & raw data</div>
+      <input type="text" class="form-input" style="width:180px" placeholder="Filter agent..." oninput="filterAgents(this.value)" value="${state.teamSearch||''}">
+    </div>
+    <div class="agent-grid">${filtered.map(a=>renderAgentCard(a)).join('')}</div>
+
+    <div class="section-header" style="margin-top:28px">
+      <div class="section-title">📊 Performance by Channel</div>
+      <span class="section-link" onclick="goToRaw('raw-channels')">Raw data →</span>
+    </div>
+    ${renderChannelPerformance()}
+
+    <div class="section-header" style="margin-top:24px">
+      <div class="section-title">📧 Emails Per Hour</div>
+      <span class="section-link" onclick="showPage('helpcenter')">Ticket fields →</span>
+    </div>
+    ${renderEmailsPerHour()}
+
+    <div class="section-header" style="margin-top:24px">
+      <div class="section-title">📞 Phone Performance This Week</div>
+      <span class="section-link" onclick="goToRaw('raw-calls')">Raw data →</span>
+    </div>
+    ${renderPhoneSection()}
+  `;
+}
+
+function filterAgents(v){state.teamSearch=v;renderTeam();}
+function openAgent(n){state.selectedAgent=n;showPage('team',n);}
+
+function renderAgentCard(a){
+  const flag=getAgentFlag(a);const name=matchAgent(a.Agent)||a.Agent;
+  const initials=name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const csat=getCSAT(a);
+  const frt=String(a['First response time']||'—');
+  const frtMins=toMins(frt);
+  const frtClass=frtMins&&frtMins>1440?'red':frtMins&&frtMins>720?'amber':'';
+  const cardClass=flag==='red'?'red':flag==='amber'?'amber':flag==='kudos'?'kudos':'ok';
+  const avatarClass=flag==='red'?'red':flag==='amber'?'amber':flag==='kudos'?'kudos':'';
+  return`<div class="agent-card ${cardClass}" onclick="openAgent('${name}')">
+    <div class="agent-card-header">
+      <div class="agent-avatar ${avatarClass}">${initials}</div>
+      <div class="agent-card-name">${name}</div>
+      <div class="agent-csat-chip ${csat?'has':'none'}">⭐${csat?csat.toFixed(2):'—'}</div>
+      <div class="agent-card-status">${flag==='red'?'🔴':flag==='amber'?'🟡':flag==='kudos'?'⭐':'✅'}</div>
+    </div>
+    <div class="agent-metrics-grid">
+      <div class="agent-metric"><div class="agent-metric-label">First Response</div><div class="agent-metric-value ${frtClass}">${frt}</div></div>
+      <div class="agent-metric"><div class="agent-metric-label">Resolution</div><div class="agent-metric-value">${a['Resolution time']||'—'}</div></div>
+      <div class="agent-metric"><div class="agent-metric-label">One-Touch</div><div class="agent-metric-value">${a['One touch tickets']||'—'}</div></div>
+      <div class="agent-metric"><div class="agent-metric-label">Online</div><div class="agent-metric-value">${a['Online time']||'—'}</div></div>
+    </div>
+    <div class="agent-card-footer">→ Full detail & raw data</div>
+  </div>`;
+}
+
+function renderAgentDetail(el){
+  const agents=(state.currentWeek.gorgias||{}).agents||[];
+  const a=agents.find(ag=>matchAgent(ag.Agent)===state.selectedAgent);
+  if(!a){state.selectedAgent=null;renderTeam();return;}
+  const flag=getAgentFlag(a);const name=matchAgent(a.Agent)||a.Agent;
+  const initials=name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  const csat=getCSAT(a);
+  const history=state.weeks.map(w=>{const wa=(w.gorgias||{}).agents?.find(ag=>matchAgent(ag.Agent)===state.selectedAgent);return{label:w.label,agent:wa};}).filter(h=>h.agent);
+  // Phone stats for this agent
+  const userCalls=((state.currentWeek.gorgias||{}).userCalls||[]).find(u=>matchAgent(u.user)===name);
+
+  el.innerHTML=`
+    <div class="back-btn" onclick="state.selectedAgent=null;renderTeam()">← Back to Team</div>
+    <div class="agent-detail-banner">
+      <div class="agent-detail-avatar">${initials}</div>
+      <div>
+        <div class="agent-detail-name">${name}</div>
+        <div class="agent-detail-week">Week of ${state.currentWeek.label}</div>
+      </div>
+      <div class="agent-detail-actions">
+        ${flag==='red'?badge('🔴 Needs Attention','red'):flag==='amber'?badge('🟡 Watch','amber'):flag==='kudos'?badge('⭐ Kudos','purple'):badge('✅ On Target','green')}
+        ${csat?badge('CSAT '+csat.toFixed(2)+' ⭐','green'):badge('CSAT —','gray')}
+        <div class="raw-btn" onclick="goToRaw('raw-agents')">🗂️ Raw Data</div>
+      </div>
+    </div>
+
+    <div class="stat-grid stat-4">
+      ${[['First Response',a['First response time']||'—',flag==='red'?'red':'blue'],
+         ['Avg Response',a['Average response time']||'—','teal'],
+         ['Resolution',a['Resolution time']||'—','purple'],
+         ['One-Touch',a['One touch tickets']||'—','green'],
+         ['Tickets Replied',a['Tickets replied']||'—','blue'],
+         ['Messages Sent',a['Messages sent']||'—','teal'],
+         ['Online Time',a['Online time']||'—','purple'],
+         ['Msg / Hr',a['Messages sent per hour']||'—','green']
+        ].map(([l,v,c])=>`<div class="stat-card ${c}"><div class="stat-card-label">${l}</div><div class="stat-card-value ${c}" style="font-size:20px">${v}</div></div>`).join('')}
+    </div>
+
+    ${userCalls?`
+      <div class="section-header" style="margin-top:20px">
+        <div class="section-title">📞 Phone Stats</div>
+        <span class="section-link" onclick="goToRaw('raw-calls')">Raw data →</span>
+      </div>
+      <div class="stat-grid stat-4">
+        ${[['Calls Answered',userCalls['picked up (by user)']||'—','blue'],
+           ['Avg Talk Time',userCalls['avg talk time']||'—','teal'],
+           ['% In SLA',userCalls['% inbound in sla (vs answered)']||'—','green'],
+           ['Missed',userCalls['not picked up (by user)']||'—','amber']
+          ].map(([l,v,c])=>`<div class="stat-card ${c}"><div class="stat-card-label">${l}</div><div class="stat-card-value ${c}" style="font-size:20px">${v}</div></div>`).join('')}
+      </div>
+    `:''}
+
+    ${history.length>1?`
+      <div class="section-header" style="margin-top:20px">
+        <div class="section-title">History — All Weeks</div>
+      </div>
+      <div class="table-card"><div class="table-wrap"><table>
+        <thead><tr><th>Week</th><th>FRT</th><th>Resolution</th><th>One-Touch</th><th>Tickets</th><th>CSAT</th><th>Status</th></tr></thead>
+        <tbody>${history.map(h=>{
+          const hf=getAgentFlag(h.agent);const hc=getCSAT(h.agent);
+          return`<tr>
+            <td><strong>${h.label}</strong></td>
+            <td class="mono">${h.agent['First response time']||'—'}</td>
+            <td class="mono">${h.agent['Resolution time']||'—'}</td>
+            <td>${h.agent['One touch tickets']||'—'}</td>
+            <td>${h.agent['Tickets replied']||'—'}</td>
+            <td>${hc?badge(hc.toFixed(2)+' ⭐','green'):badge('—','gray')}</td>
+            <td>${hf==='red'?badge('🔴','red'):hf==='amber'?badge('🟡','amber'):hf==='kudos'?badge('⭐','purple'):badge('✅','green')}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div></div>
+    `:''}
+
+    <div class="section-header" style="margin-top:20px">
+      <div class="section-title">Raw Data — This Agent</div>
+      <span class="section-link" onclick="goToRaw('raw-agents')">Full agents table →</span>
+    </div>
+    <div class="table-card">${renderRawTable([a])}</div>
+  `;
+}
+
+
+function renderChannelPerformance(){
+  const w=state.currentWeek;if(!w)return'<div class="no-data">No data.</div>';
+  // Prefer ticket export channel breakdown; fall back to gorgias channels
+  const breakdown=(w.gorgias||{}).channelBreakdown||[];
+  const gorgiasChannels=(w.gorgias||{}).channels||[];
+
+  function secsToStr(s){if(!s||isNaN(s))return'—';if(s>=86400){const d=Math.floor(s/86400);const h=Math.floor((s%86400)/3600);return d+'d '+h+'h';}if(s>=3600){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return h+'h '+m+'m';}return Math.floor(s/60)+'m';}
+  function frtColor(ch,secs){
+    if(!secs)return'gray';
+    if(ch==='email'||ch==='contact-form')return secs<=86400?'green':secs<=172800?'amber':'red';
+    if(ch==='chat')return secs<=180?'green':secs<=600?'amber':'red';
+    if(ch.includes('instagram')||ch.includes('facebook')||ch==='sms')return secs<=600?'green':secs<=3600?'amber':'red';
+    return secs<=86400?'green':secs<=172800?'amber':'red';
+  }
+  const channelEmoji={email:'📧',chat:'💬',aircall:'📞','instagram-direct-message':'📸','facebook':'👤','instagram-mention':'📸','instagram-ad-comment':'📸','instagram-comment':'📸','facebook-mention':'👤','facebook-messenger':'💬','help-center':'❓',other:'📋'};
+
+  if(breakdown.length){
+    return`<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Channel</th><th>Tickets</th><th>Avg FRT</th><th>SLA Target</th><th>Avg Resolution</th><th>CSAT</th><th>Top Reason</th><th>Status</th></tr></thead>
+      <tbody>${breakdown.slice(0,10).map(c=>{
+        const fc=frtColor(c.channel,c.avgFRT);
+        const slaTarget=c.channel==='email'?'24h':c.channel==='chat'?'3m':(c.channel.includes('instagram')||c.channel.includes('facebook'))? '10m':'24h';
+        return`<tr>
+          <td><strong>${channelEmoji[c.channel]||'📋'} ${c.channel}</strong></td>
+          <td>${c.count}</td>
+          <td class="mono">${secsToStr(c.avgFRT)}</td>
+          <td style="font-size:11px;color:var(--text-muted)">${slaTarget}</td>
+          <td class="mono">${secsToStr(c.avgRes)}</td>
+          <td>${c.avgCSAT?badge(c.avgCSAT.toFixed(2)+' ⭐',c.avgCSAT>=4?'green':c.avgCSAT>=3?'amber':'red'):badge('—','gray')}</td>
+          <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.topReason}</td>
+          <td>${badge(fc==='green'?'✅ On Target':fc==='amber'?'🟡 Watch':'🔴 Above SLA',fc)}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div></div>`;
+  }
+  // Fall back to gorgias channel export
+  if(gorgiasChannels.length){
+    const key=gorgiasChannels.filter(c=>['email','chat','aircall','facebook','instagram-direct-message'].includes(c.Channel));
+    return`<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Channel</th><th>Tickets</th><th>First Response</th><th>Resolution</th><th>CSAT</th></tr></thead>
+      <tbody>${key.map(c=>{const frt=c['First response time']||'—';const csat=parseFloat(c['Average CSAT']||0);
+        return`<tr><td><strong>${channelEmoji[c.Channel]||'📋'} ${c.Channel}</strong></td><td>${c['Created tickets']||'—'}</td><td class="mono">${frt}</td><td class="mono">${c['Resolution time']||'—'}</td><td>${csat>0?badge(csat.toFixed(2)+' ⭐',csat>=4?'green':csat>=3?'amber':'red'):badge('—','gray')}</td></tr>`;
+      }).join('')}</tbody></table></div></div>`;
+  }
+  return'<div class="no-data">Upload ticket export or Gorgias channel metrics.</div>';
+}
+
+function renderEmailsPerHour(){
+  const w=state.currentWeek;if(!w)return'<div class="no-data">No data.</div>';
+  const agents=(w.gorgias||{}).agents||[];
+  const agentEmailCounts=(w.gorgias||{}).agentEmailCounts||{};
+  const rows=[];
+  for(const [rName,sched] of Object.entries(AGENT_SCHEDULE)){
+    const agentRow=agents.find(a=>matchAgent(a.Agent)===rName);
+    if(!agentRow)continue;
+    const tickets=parseInt(agentRow['Tickets replied']||0);
+    const emailCount=Object.entries(agentEmailCounts).find(([k])=>matchAgent(k)===rName)?.[1]||null;
+    const emailTickets=emailCount||tickets; // use email-specific count if available
+    const netHours=sched.emailHoursPerDay*(sched.days.length||5);
+    const eph=netHours>0?(emailTickets/netHours).toFixed(1):null;
+    const ephNum=parseFloat(eph||0);
+    const ephColor=!sched.counted?'gray':ephNum>=EMAIL_PER_HOUR_TARGET?'green':ephNum>=8?'amber':'red';
+    rows.push({name:rName,tickets:emailTickets,netHours:netHours.toFixed(1),eph,ephColor,counted:sched.counted,note:sched.note,onlineTime:agentRow['Online time']||'—'});
+  }
+  if(!rows.length)return'<div class="no-data">Upload agent metrics to calculate emails per hour.</div>';
+  return`<div class="info-note" style="margin-bottom:12px"><strong>Target: ${EMAIL_PER_HOUR_TARGET}+ emails/hr</strong> — Net hours exclude lunch + 2× 15min breaks. Uncounted agents (Kylee, Vanessa, Jori, Ross) are shown for visibility but not benchmarked.</div>
+  <div class="table-card"><div class="table-wrap"><table>
+    <thead><tr><th>Agent</th><th>Email Tickets</th><th>Net Email Hrs</th><th>Emails/Hr</th><th>Online Time</th><th>Status</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><strong style="cursor:pointer;color:var(--blue)" onclick="openAgent('${r.name}')">${r.name}</strong>${!r.counted?'<span style="font-size:10px;color:var(--text-muted);margin-left:4px">(not benchmarked)</span>':''}</td>
+      <td>${r.tickets}</td>
+      <td class="mono">${r.netHours}h</td>
+      <td>${r.eph?badge(r.eph+'/hr',r.ephColor):badge('—','gray')}</td>
+      <td class="mono">${r.onlineTime}</td>
+      <td>${!r.counted?badge('—','gray'):r.ephColor==='green'?badge('✅ On Target','green'):r.ephColor==='amber'?badge('🟡 Watch','amber'):badge('🔴 Below Target','red')}</td>
+    </tr>`).join('')}</tbody></table></div></div>`;
+}
+
+function renderPhoneSection(){
+  const calls=(state.currentWeek.gorgias||{}).calls||[];
+  const userCalls=(state.currentWeek.gorgias||{}).userCalls||[];
+  if(!calls.length&&!userCalls.length)return`<div class="no-data">No phone data. Upload Aircall exports (global_call_kpis_breakdown.csv and user_kpis_breakdown.csv).</div>`;
+  const totalIn=calls.reduce((s,c)=>s+parseInt(c['total inbound calls']||0),0);
+  const totalAns=calls.reduce((s,c)=>s+parseInt(c['answered inbound']||0),0);
+  const totalMiss=calls.reduce((s,c)=>s+parseInt(c['missed inbound calls']||0),0);
+  const ar=totalIn>0?((totalAns/totalIn)*100).toFixed(1)+'%':'—';
+  const arColor=parseFloat(ar)>=80?'green':parseFloat(ar)>=65?'amber':'red';
+
+  // Phone kudos: agents with 100% SLA or high answer rate
+  const phoneKudos=userCalls.filter(u=>{
+    const name=matchAgent(u.user);if(!name)return false;
+    const sla=parseFloat(String(u['% inbound in sla (vs answered)']||'0').replace('%',''));
+    return sla>=100;
+  });
+
+  const agentRows=userCalls.filter(u=>matchAgent(u.user));
+
+  return`
+    <div class="stat-grid stat-3" style="margin-bottom:16px">
+      <div class="stat-card blue"><div class="stat-card-label">Total Inbound</div><div class="stat-card-value blue">${totalIn}</div><div class="stat-card-sub">This week</div></div>
+      <div class="stat-card ${arColor}"><div class="stat-card-label">Team Answer Rate</div><div class="stat-card-value ${arColor}">${ar}</div><div class="stat-card-badge ${arColor}">${si(arColor)} Target ≥80%</div></div>
+      <div class="stat-card ${totalMiss>50?'red':totalMiss>20?'amber':'green'}"><div class="stat-card-label">Missed Calls</div><div class="stat-card-value ${totalMiss>50?'red':totalMiss>20?'amber':'green'}">${totalMiss}</div><div class="stat-card-sub">Need callbacks</div></div>
+    </div>
+
+    ${phoneKudos.length?`
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--kudos)">⭐ Phone Kudos — 100% SLA this week</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${phoneKudos.map(u=>`<div style="background:var(--kudos-light);border:1px solid var(--amber-border);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--kudos)">${matchAgent(u.user)} — ${u['picked up (by user)']} calls · ${u['avg talk time']||'—'} avg</div>`).join('')}
+        </div>
+      </div>
+    `:''}
+
+    ${agentRows.length?`
+      <div class="table-card"><div class="table-wrap"><table>
+        <thead><tr><th>Agent</th><th>Calls Answered</th><th>Avg Talk Time</th><th>% In SLA</th><th>Missed</th><th>Total Talk Time</th><th>Status</th></tr></thead>
+        <tbody>${agentRows.map(u=>{
+          const name=matchAgent(u.user);
+          const sla=parseFloat(String(u['% inbound in sla (vs answered)']||'0').replace('%',''));
+          const slaColor=sla>=100?'green':sla>=75?'amber':'red';
+          const ans=parseInt(u['picked up (by user)']||0);
+          return`<tr>
+            <td><strong style="cursor:pointer;color:var(--blue)" onclick="openAgent('${name}')">${name}</strong></td>
+            <td>${ans}</td>
+            <td class="mono">${u['avg talk time']||'—'}</td>
+            <td>${badge(u['% inbound in sla (vs answered)']||'—',slaColor)}</td>
+            <td>${u['not picked up (by user)']||'—'}</td>
+            <td class="mono">${u['total talk time']||'—'}</td>
+            <td>${sla>=100?badge('⭐ Perfect SLA','green'):sla>=75?badge('✅ OK','green'):badge('🟡 Watch','amber')}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div></div>
+    `:`<div class="no-data">Upload user_kpis_breakdown.csv for per-agent phone stats.</div>`}
+  `;
+}
+
+// AI
+function renderAI(){
+  const el=document.getElementById('aiContent');
+  if(!state.currentWeek){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">No data loaded</div></div>`;return;}
+  const ai=state.currentWeek.ai||{};const tags=(state.currentWeek.gorgias||{}).tags||[];
+  const avgs=calcTeamAvgs((state.currentWeek.gorgias||{}).agents||[]);
+  const auto=(state.currentWeek.gorgias||{}).automate||[];const lowCSAT=(state.currentWeek.gorgias||{}).lowCSAT||[];
+  const milesAgent=((state.currentWeek.gorgias||{}).agents||[]).find(a=>String(a.Agent||'').includes('Miles'));
+  const milesCSAT=milesAgent?getCSAT(milesAgent):null;
+  const aiRate=parseFloat(ai.automationRate||0)*100;
+  const aiColor=aiRate>=40?'green':aiRate>=30?'amber':(aiRate>0?'red':'gray');
+  el.innerHTML=`
+    <div class="stat-grid stat-4">
+      <div class="stat-card ${aiColor}"><div class="stat-card-label">AI Automation Rate</div><div class="stat-card-value ${aiColor}">${aiRate>0?aiRate.toFixed(0)+'%':'—'}</div><div class="stat-card-badge ${aiColor}">${si(aiColor)} Target ≥40%</div></div>
+      <div class="stat-card blue"><div class="stat-card-label">AI Interactions</div><div class="stat-card-value blue">${ai.interactions||'—'}</div><div class="stat-card-sub">Prior: ${ai.prevInteractions||'—'}</div></div>
+      <div class="stat-card ${milesCSAT?milesCSAT>=T.csatGreen?'green':milesCSAT>=T.csatAmber?'amber':'red':'teal'}">
+        <div class="stat-card-label">Miles CSAT vs Team</div>
+        <div class="stat-card-value ${milesCSAT?milesCSAT>=T.csatGreen?'green':milesCSAT>=T.csatAmber?'amber':'red':'teal'}">${milesCSAT?milesCSAT.toFixed(2):'—'}</div>
+        <div class="stat-card-sub" id="miles-vs-team-sub">Loading...</div>
+      </div>
+      <div class="stat-card purple"><div class="stat-card-label">Cost Saved</div><div class="stat-card-value purple">${ai.costSaved||'—'}</div><div class="stat-card-sub">Prior: ${ai.prevCostSaved||'—'}</div></div>
+    </div>
+    ${(()=>{const mc=milesCSAT;const tc=avgs.avgCSAT;if(mc&&tc){const diff=(mc-tc).toFixed(2);const better=parseFloat(diff)>0;return`<div class="info-note" style="margin-bottom:12px">Miles CSAT <strong>${mc.toFixed(2)}</strong> vs Team avg <strong>${tc.toFixed(2)}</strong> — Miles is <strong style="color:${better?'var(--green)':'var(--red)'}">${better?'+'+diff:diff}</strong> ${better?'✅ Above team':'⚠️ Below team'}</div>`;}return'';})()}
+    ${lowCSAT.length?`
+      <div class="section-header" style="margin-top:20px">
+        <div class="section-title">⚠️ Miles Low CSAT Tickets (${lowCSAT.length})</div>
+        <span class="section-link" onclick="goToRaw('raw-lowcsat')">Raw data →</span>
+      </div>
+      <div class="table-card"><div class="table-wrap"><table>
+        <thead><tr><th>Ticket</th><th>Issue Category</th><th>What Miles Said / Did</th><th>Note</th></tr></thead>
+        <tbody>${lowCSAT.map(r=>`<tr>
+          <td><a href="${gorgiasLink(r['Ticket ID'])}" target="_blank" style="color:var(--blue);font-family:'DM Mono',monospace;font-size:12px;text-decoration:none;font-weight:600">#${r['Ticket ID']||'—'} ↗</a></td>
+          <td>${badge(String(r['Friction Category']||'—').split(' ').slice(0,3).join(' '),'red')}</td>
+          <td style="font-size:12px;max-width:360px">${String(r['The "Exact Reason" / Miles Quote']||'—').slice(0,130)}${String(r['The "Exact Reason" / Miles Quote']||'').length>130?'...':''}</td>
+          <td style="font-size:12px;color:var(--text-muted)">${r['Human Summary']&&r['Human Summary']!=='NaN'?r['Human Summary']:''}</td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>
+    `:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+      <div>
+        <div class="section-header"><div class="section-title">Daily AI Activity</div><span class="section-link" onclick="goToRaw('raw-auto')">Raw →</span></div>
+        ${auto.length?`<div class="table-card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>AI Interactions</th><th>Flows</th><th>Track Order</th></tr></thead>
+          <tbody>${auto.map(r=>{const v=parseInt(r['AI Agent']||0);return`<tr><td>${r.date||'—'}</td><td ${v===0?'style="color:var(--amber);font-weight:700"':''}>${v}${v===0?' ⚠️':''}</td><td>${r['Flows']||0}</td><td>${r['Track order']||0}</td></tr>`;}).join('')}</tbody></table></div></div>`
+          :`<div class="no-data">No automation data.</div>`}
+      </div>
+      <div>
+        <div class="section-header"><div class="section-title">Top Tags</div><span class="section-link" onclick="goToRaw('raw-tags')">Raw →</span></div>
+        ${tags.length?`<div class="table-card"><div class="table-wrap"><table><thead><tr><th>Tag</th><th>Total</th><th>%</th><th>WoW</th></tr></thead>
+          <tbody>${tags.slice(0,12).map(t=>{const d=String(t.delta||'—');const dc=d.includes('+')?'amber':d.includes('-')?'green':'gray';return`<tr><td><strong>${t.tag}</strong></td><td>${t.total}</td><td>${t.percentage||'—'}</td><td>${badge(d,dc)}</td></tr>`;}).join('')}</tbody></table></div></div>`
+          :`<div class="no-data">No tag data.</div>`}
+      </div>
+    </div>`;
+}
+
+// RETURNS
+function renderReturns(){
+  const el=document.getElementById('returnsContent');
+  if(!state.currentWeek){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No data loaded</div></div>`;return;}
+  const s=state.currentWeek.shopify||{};const af=state.currentWeek.aftership||{};
+  const wkSales=s.weekSales||0;const wkReturns=s.weekReturns||0;
+  const rr=wkSales>0?(wkReturns/wkSales*100):0;
+  const rrColor=rr>20?'red':rr>15?'amber':'green';
+  const daily=s.daily||[];
+
+  // Return rate over time trend from AfterShip
+  const rrOT=af.returnRateOverTime||[];
+  const rrSummary=af.returnRateSummary||null;
+  let trendArrow='—';let trendColor='gray';
+  if(rrOT.length>=2){
+    const first=rrOT[0].orderReturnRate;const last=rrOT[rrOT.length-1].orderReturnRate;
+    const diff=(last-first).toFixed(1);
+    trendArrow=parseFloat(diff)>0?`↑ ${diff}%`:parseFloat(diff)<0?`↓ ${Math.abs(diff)}%`:'→ Flat';
+    trendColor=parseFloat(diff)>2?'red':parseFloat(diff)<-2?'green':'amber';
+  }
+
+  // Return rate vs Shopify units sold
+  const salesRows=s.salesRows||[];
+  const totalUnitsSold=salesRows.reduce((sum,r)=>sum+parseInt(String(r['Net items sold']||r['Orders']||0).replace(/,/g,'')),0);
+  const returnedProducts=af.returnedProducts||[];
+  const totalUnitsReturned=returnedProducts.reduce((sum,r)=>sum+parseInt(String(r['Return quantity']||0).replace(/,/g,'')),0);
+  const unitReturnRate=totalUnitsSold>0?((totalUnitsReturned/totalUnitsSold)*100):0;
+
+  el.innerHTML=`
+    <div class="stat-grid stat-4">
+      <div class="stat-card ${rrColor}"><div class="stat-card-label">Week Return Rate</div><div class="stat-card-value ${rrColor}">${rr>0?rr.toFixed(1)+'%':(rrSummary?rrSummary.orderReturnRate.toFixed(1)+'%':'—')}</div><div class="stat-card-badge ${rrColor}">${si(rrColor)} Target ≤15%</div></div>
+      <div class="stat-card red"><div class="stat-card-label">Revenue Returned (Week)</div><div class="stat-card-value red">$${(wkReturns/1000).toFixed(1)}K</div><div class="stat-card-sub">of $${(wkSales/1000).toFixed(1)}K in sales</div></div>
+      <div class="stat-card ${trendColor}"><div class="stat-card-label">Return Rate Trend</div><div class="stat-card-value ${trendColor}">${trendArrow}</div><div class="stat-card-sub">${rrOT.length>0?'Over '+rrOT.length+' days':'Upload return rate export'}</div></div>
+      <div class="stat-card amber"><div class="stat-card-label">Unit Return Rate</div><div class="stat-card-value amber">${unitReturnRate>0?unitReturnRate.toFixed(1)+'%':(rrSummary?rrSummary.itemReturnRate.toFixed(1)+'%':'—')}</div><div class="stat-card-sub">${totalUnitsReturned>0?totalUnitsReturned+' returned of '+totalUnitsSold.toLocaleString()+' sold':'vs total units sold'}</div></div>
+    </div>
+
+    ${rrOT.length>0?`
+    <div class="section-header"><div class="section-title">Return Rate Over Time</div></div>
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Orders w/ Returns</th><th>Total Orders</th><th>Order Return Rate</th><th>Item Return Rate</th><th>Trend</th></tr></thead>
+      <tbody>${rrOT.map((r,i)=>{
+        const prev=i>0?rrOT[i-1].orderReturnRate:null;
+        const diff=prev!==null?(r.orderReturnRate-prev):null;
+        const arrow=diff===null?'':diff>0.5?'↑':diff<-0.5?'↓':'→';
+        const ac=diff===null?'gray':diff>0.5?'red':diff<-0.5?'green':'gray';
+        const rc=r.orderReturnRate>20?'red':r.orderReturnRate>15?'amber':'green';
+        return`<tr><td>${r.date}</td><td>${r.ordersWithReturns.toLocaleString()}</td><td>${r.totalOrders.toLocaleString()}</td><td>${badge(r.orderReturnRate.toFixed(1)+'%',rc)}</td><td>${r.itemReturnRate.toFixed(1)}%</td><td>${arrow?badge(arrow,ac):''}</td></tr>`;
+      }).join('')}</tbody></table></div></div>`:''}
+
+    <div class="section-header" style="margin-top:20px">
+      <div class="section-title">Daily Sales vs Returns</div>
+      <span class="section-link" onclick="goToRaw('raw-shopify')">Raw data →</span>
+    </div>
+    ${daily.length?`<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Sales</th><th>Returns</th><th>Return Rate</th><th>Status</th></tr></thead>
+      <tbody>${daily.map(d=>{const rr2=parseFloat(d.returnRate||0);const c=rr2>20?'red':rr2>15?'amber':'green';
+        return`<tr><td>${d.date}</td><td class="mono">$${Number(d.sales).toLocaleString('en-US',{minimumFractionDigits:2})}</td><td class="mono">$${Number(d.returns).toLocaleString('en-US',{minimumFractionDigits:2})}</td><td>${badge(rr2.toFixed(1)+'%',c)}</td><td>${badge(c==='green'?'✅ On Target':c==='amber'?'🟡 Watch':'🔴 High',c)}</td></tr>`;
+      }).join('')}</tbody></table></div></div>`:`<div class="no-data">No Shopify refunds data. Upload Shopify → Finances → Returns export.</div>`}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+      <div>
+        <div class="section-header"><div class="section-title">🚩 Top Returned Styles</div><span class="section-link" onclick="goToRaw('raw-returns')">Raw →</span></div>
+        ${returnedProducts.length?`<div class="table-card"><div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Returned</th><th>Return Rate</th><th>Value</th></tr></thead>
+          <tbody>${returnedProducts.slice(0,10).map(p=>{
+            const rq=parseInt(String(p['Return quantity']||0).replace(/,/g,''));
+            const ts=parseInt(String(p['Total items sold']||0).replace(/,/g,''));
+            const rr3=ts>0?((rq/ts)*100):parseFloat(String(p['Item return rate']||'0').replace('%',''));
+            const c=rr3>40?'red':rr3>25?'amber':'gray';
+            return`<tr><td style="font-size:12px;max-width:160px">${p['Product title']||'—'}</td><td style="font-weight:700">${rq||'—'}</td><td>${badge(rr3.toFixed(1)+'%',c)}</td><td style="font-size:12px">${p['Return value']||'—'}</td></tr>`;
+          }).join('')}</tbody></table></div></div>`:`<div class="no-data">Upload AfterShip returned products export.</div>`}
+      </div>
+      <div>
+        <div class="section-header"><div class="section-title">🔧 Top Warranty Claims</div><span class="section-link" onclick="goToRaw('raw-warranty')">Raw →</span></div>
+        ${(af.warranty||[]).length?`<div class="table-card"><div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>SKU</th><th>Claims</th><th>% of Total</th></tr></thead>
+          <tbody>${(af.warranty||[]).slice(0,10).map(p=>`<tr><td style="font-size:12px">${p['Product']||'—'}</td><td class="mono" style="font-size:11px">${p['SKU']||'—'}</td><td><strong>${p['Warranty quantity']||'—'}</strong></td><td style="font-size:12px;color:var(--text-muted)">${p['% of warranty items']||'—'}</td></tr>`).join('')}</tbody></table></div></div>`:`<div class="no-data">Upload AfterShip warranty export.</div>`}
+        ${(af.warrantyReasons||[]).length?`
+        <div class="section-header" style="margin-top:12px"><div class="section-title">Warranty Reasons</div></div>
+        <div class="table-card"><div class="table-wrap"><table>
+          <thead><tr><th>Reason</th><th>Product</th><th>Claims</th></tr></thead>
+          <tbody>${(af.warrantyReasons||[]).slice(0,8).map(r=>`<tr><td>${badge(r['Warranty reason']||'—','amber')}</td><td style="font-size:12px">${r['Product']||'—'}</td><td><strong>${r['Warranty quantity']||'—'}</strong></td></tr>`).join('')}</tbody></table></div></div>`:''}
+      </div>
+    </div>
+    <div class="section-header" style="margin-top:20px"><div class="section-title">Top Return Reasons</div><span class="section-link" onclick="goToRaw('raw-reasons')">Raw →</span></div>
+    ${(af.returnReasons||[]).length?`<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Product</th><th>SKU</th><th>Reason</th><th>Sub-Reason</th><th>Qty</th></tr></thead>
+      <tbody>${(af.returnReasons||[]).slice(0,12).map(r=>`<tr><td style="font-size:12px">${r['Product title']||'—'}</td><td class="mono" style="font-size:11px">${r['SKU']||'—'}</td><td>${r['Return reason']||'—'}</td><td style="font-size:12px">${r['Sub-reason']||'—'}</td><td><strong>${r['Return quantity']||'—'}</strong></td></tr>`).join('')}</tbody></table></div></div>`:`<div class="no-data">No return reason data.</div>`}`;
+}
+
+// TRENDS
+function renderThemes(){
+  const el=document.getElementById('themesContent');
+  if(!state.currentWeek){el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">No data loaded</div></div>';return;}
+  const csatT=(state.currentWeek.gorgias||{}).csatTickets||[];
+  const ticketM=(state.currentWeek.gorgias||{}).ticketMessages||[];
+  if(!csatT.length&&!ticketM.length){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">No theme data yet</div><div class="empty-desc">Upload a CSAT export or ticket messages export from Gorgias.</div>'+
+    '<div style="margin-top:16px;text-align:left;max-width:420px;margin:16px auto 0"><div style="font-size:13px;font-weight:600;margin-bottom:8px">How to get this data:</div>'+
+    '<div style="font-size:13px;color:var(--text-muted);line-height:1.8"><strong>CSAT Export:</strong> Gorgias → Reports → CSAT → Export<br><strong>Ticket Export:</strong> Gorgias → Tickets → filter date → Export</div></div></div>';
+    return;
+  }
+  const allText=[...csatT.map(t=>t['Comment']||t['Customer Comment']||''),...ticketM.map(t=>t['Body']||t['Message']||'')].filter(t=>t.length>5);
+  const themes=buildThemes(allText);
+  el.innerHTML=`<div class="sh"><div class="sh-title">Customer Theme Analysis — ${state.currentWeek.label}</div></div>`+
+  `<div class="grid grid-3" style="margin-bottom:18px">`+
+  `<div class="card blue-card"><div class="card-label">Messages Analyzed</div><div class="card-value blue">${allText.length}</div></div>`+
+  `<div class="card green"><div class="card-label">Positive Themes</div><div class="card-value green">${themes.positive.length}</div></div>`+
+  `<div class="card amber"><div class="card-label">Concern Themes</div><div class="card-value amber">${themes.concerns.length}</div></div>`+
+  `</div>`+renderWordCloud(themes.wordFreq)+
+  `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">`+
+  `<div><div class="sh"><div class="sh-title">✅ Top Positive Themes</div></div><div class="table-wrap"><table><thead><tr><th>Theme</th><th>Count</th><th>Example</th></tr></thead><tbody>`+
+  themes.positive.slice(0,8).map(t=>`<tr><td>${badge(t.theme,'green')}</td><td><strong>${t.count}</strong></td><td style="font-size:12px;color:var(--text-muted)">${t.example.slice(0,80)}</td></tr>`).join('')+
+  `</tbody></table></div></div>`+
+  `<div><div class="sh"><div class="sh-title">⚠️ Concern Themes</div></div><div class="table-wrap"><table><thead><tr><th>Theme</th><th>Count</th><th>Example</th></tr></thead><tbody>`+
+  themes.concerns.slice(0,8).map(t=>`<tr><td>${badge(t.theme,'red')}</td><td><strong>${t.count}</strong></td><td style="font-size:12px;color:var(--text-muted)">${t.example.slice(0,80)}</td></tr>`).join('')+
+  `</tbody></table></div></div></div>`;
+}
+
+function buildThemes(texts){
+  const POS={'helpful':['helpful','help','helped'],'friendly':['friendly','kind','nice','polite','warm'],'fast response':['fast','quick','quickly','prompt','immediately'],'resolved':['resolved','fixed','solved','solution'],'knowledgeable':['knowledgeable','expert','professional'],'great service':['great','excellent','amazing','wonderful','fantastic'],'easy process':['easy','smooth','simple','effortless']};
+  const CON={'sizing issue':['too small','too big','sizing','size problem','fit','narrow','wide'],'shipping delay':['shipping delay','delayed','late','never received','still waiting'],'defect/quality':['defect','broken','crack','tear','hole','peeling','falling apart'],'return issue':['return','refund','exchange','warranty'],'poor response':['no response','ignored','waited days','slow response'],'wrong item':['wrong item','incorrect','not what i ordered','missing']};
+  const wordFreq={};const positive=[];const concerns=[];
+  for(const[theme,words]of Object.entries(POS)){let count=0;let example='';for(const text of texts){const tl=text.toLowerCase();if(words.some(w=>tl.includes(w))){count++;if(!example)example=text;}words.forEach(w=>{if(tl.includes(w))wordFreq[w]=(wordFreq[w]||0)+1;});}if(count>0)positive.push({theme,count,example});}
+  for(const[theme,words]of Object.entries(CON)){let count=0;let example='';for(const text of texts){const tl=text.toLowerCase();if(words.some(w=>tl.includes(w))){count++;if(!example)example=text;}}if(count>0)concerns.push({theme,count,example});}
+  positive.sort((a,b)=>b.count-a.count);concerns.sort((a,b)=>b.count-a.count);
+  return{positive,concerns,wordFreq};
+}
+
+function renderWordCloud(wordFreq){
+  const words=Object.entries(wordFreq).sort((a,b)=>b[1]-a[1]).slice(0,30);if(!words.length)return'';
+  const max=words[0][1];
+  return'<div style="background:var(--surface,#fff);border:1px solid var(--border,#e5e8ec);border-radius:14px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center;line-height:2.4">'+
+  words.map(([word,count])=>{const size=12+Math.round((count/max)*20);const op=(0.4+(count/max)*0.6).toFixed(1);return'<span style="font-size:'+size+'px;font-weight:'+(count>max/2?700:500)+';color:#4CAACE;opacity:'+op+';margin:0 6px" title="'+count+' mentions">'+word+'</span>';}).join('')+'</div>';
+}
+
+
+function renderHelpCenter(){
+  const el=document.getElementById('helpcenterContent');
+  if(!state.currentWeek){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🏥</div><div class="empty-title">No data loaded</div></div>`;return;}
+  const w=state.currentWeek;
+  const fields=(w.gorgias||{}).ticketFields||[];
+  const ticketExport=(w.gorgias||{}).ticketExport||[];
+  const flows=(w.gorgias||{}).selfServiceFlows||[];
+
+  // Ticket field completion from full ticket export
+  let completionSection='';
+  if(ticketExport.length){
+    const total=ticketExport.length;
+    const withReason=ticketExport.filter(t=>t['Ticket Field: Reason']&&t['Ticket Field: Reason'].trim()).length;
+    const withAssignee=ticketExport.filter(t=>t['Assignee name']&&t['Assignee name'].trim()).length;
+    const withResolution=ticketExport.filter(t=>t['Ticket Field: Resolution']&&t['Ticket Field: Resolution'].trim()).length;
+    const withTag=ticketExport.filter(t=>t['Tags']&&t['Tags'].trim()).length;
+    const pct=(v)=>total>0?((v/total)*100).toFixed(0)+'%':'—';
+    const pctColor=(v)=>parseInt(v)>=80?'green':parseInt(v)>=60?'amber':'red';
+    const rPct=pct(withReason),aPct=pct(withAssignee),resPct=pct(withResolution),tPct=pct(withTag);
+    completionSection=`
+      <div class="section-header"><div class="section-title">✅ Ticket Field Completion</div></div>
+      <div class="stat-grid stat-4" style="margin-bottom:20px">
+        <div class="stat-card ${pctColor(rPct)}"><div class="stat-card-label">Reason Field Filled</div><div class="stat-card-value ${pctColor(rPct)}">${rPct}</div><div class="stat-card-sub">${withReason} of ${total}</div><div class="stat-card-badge ${pctColor(rPct)}">${pctColor(rPct)==='green'?'✅':pctColor(rPct)==='amber'?'🟡':'🔴'} Target ≥80%</div></div>
+        <div class="stat-card ${pctColor(aPct)}"><div class="stat-card-label">Assignee Set</div><div class="stat-card-value ${pctColor(aPct)}">${aPct}</div><div class="stat-card-sub">${withAssignee} of ${total}</div></div>
+        <div class="stat-card ${pctColor(resPct)}"><div class="stat-card-label">Resolution Logged</div><div class="stat-card-value ${pctColor(resPct)}">${resPct}</div><div class="stat-card-sub">${withResolution} of ${total}</div><div class="stat-card-badge ${pctColor(resPct)}">${pctColor(resPct)==='green'?'✅':pctColor(resPct)==='amber'?'🟡':'🔴'} Target ≥80%</div></div>
+        <div class="stat-card ${pctColor(tPct)}"><div class="stat-card-label">Tagged</div><div class="stat-card-value ${pctColor(tPct)}">${tPct}</div><div class="stat-card-sub">${withTag} of ${total}</div></div>
+      </div>`;
+  }
+
+  // Ticket fields daily breakdown
+  let fieldsSection='<div class="no-data">Upload ticket-fields export (from Gorgias Reports → Ticket Fields) to see contact reason breakdown.</div>';
+  if(fields.length){
+    const BLURBS={
+      'Sizing':'Customer is asking about fit, sizing charts, or whether to size up/down for a specific style.',
+      'Returns':'Customer wants to initiate a return, check return status, or understand the return policy.',
+      'Return':'Customer wants to initiate a return, check return status, or understand the return policy.',
+      'Warranty':'Customer is filing a warranty claim for outsole wear, a manufacturing defect, or requesting a replacement.',
+      'Shipping':'Customer is asking about shipping timelines, a delayed package, or a lost/missing shipment.',
+      'Order Status':'Customer is checking on the status of an existing order or tracking their shipment.',
+      'Exchange':'Customer wants to exchange a product for a different size, color, or style.',
+      'Product Inquiry':'Customer has a question about a specific product — materials, fit, use case, or availability.',
+      'Fit':'Customer is asking how a shoe fits or whether it will work for their foot type or activity.',
+      'Defect':'Customer received a product with a manufacturing defect, damage, or quality issue.',
+      'Cancel':'Customer wants to cancel or modify an order before it ships.',
+      'Discount':'Customer is asking about a promo code, discount, or price match.',
+      'Account':'Customer needs help with their account, login, or password.',
+      'Wrong Item':'Customer received the wrong product, color, or size in their order.',
+      'Review':'Customer is asking about or leaving a product review.',
+      'International':'Customer has questions about international shipping, duties, or availability.',
+    };
+    const getBlurb=(key)=>{
+      const k=key.toLowerCase();
+      for(const[word,blurb]of Object.entries(BLURBS)){if(k.includes(word.toLowerCase()))return blurb;}
+      return'Customer contact regarding '+key+'.';
+    };
+    const totals={};
+    fields.forEach(r=>{
+      const lvl1=String(r['level 1']||'').trim();const lvl2=String(r['level 2']||'').trim();
+      if(!lvl1)return;
+      const key=lvl2?lvl1+'::'+lvl2:lvl1;
+      const dayKeys=Object.keys(r).filter(k=>k.includes(','));
+      const total=dayKeys.reduce((s,k)=>s+parseInt(r[k]||0),0);
+      totals[key]=(totals[key]||0)+total;
+    });
+    const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,20);
+    const maxVal=sorted[0]?.[1]||1;
+    fieldsSection=`<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Contact Reason</th><th>Volume</th><th>What it is</th><th>Bar</th></tr></thead>
+      <tbody>${sorted.map(([k,v])=>{
+        const pct=Math.round((v/maxVal)*100);
+        const topKey=k.split('::')[0];
+        const color=topKey.includes('Warranty')||topKey.includes('Return')?'amber':topKey.includes('Shipping')||topKey.includes('Lost')?'red':topKey.includes('Product')||topKey.includes('Fit')?'blue':'gray';
+        const blurb=getBlurb(topKey);
+        return`<tr>
+          <td style="font-size:13px"><strong>${topKey}</strong>${k.includes('::')?'<br><span style="color:var(--text-muted);font-size:11px">→ '+k.split('::')[1]+'</span>':''}</td>
+          <td><span class="badge ${color}">${v}</span></td>
+          <td style="font-size:11px;color:var(--text-muted);max-width:200px;line-height:1.4">${blurb}</td>
+          <td style="width:120px"><div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--blue);border-radius:4px"></div></div></td>
+        </tr>`;
+      }).join('')}</tbody></table></div></div>`;
+  }
+
+  // Self service flows
+  let flowsSection='<div class="no-data">Upload self-service-workflows CSV to see flow performance.</div>';
+  if(flows.length){
+    flowsSection=`<div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Flow</th><th>Automation Rate</th><th>Automated</th><th>Drop-off</th><th>Served by Agent</th></tr></thead>
+      <tbody>${flows.map(f=>{
+        const rate=parseFloat(f['Automation rate']||0)*100||parseInt(f['Automation rate']||0);
+        const rateNum=rate>1?rate:rate*100;
+        const rc=rateNum>=80?'green':rateNum>=50?'amber':'red';
+        return`<tr>
+          <td><strong>${f['Flow']||'—'}</strong></td>
+          <td>${badge(rateNum.toFixed(0)+'%',rc)}</td>
+          <td>${f['Automated by flow']||'—'}</td>
+          <td>${f['Drop off']||'0'}</td>
+          <td>${f['Served by an agent after flow']||'0'}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div></div>`;
+  }
+
+  el.innerHTML=`
+    ${completionSection}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+      <div>
+        <div class="section-header"><div class="section-title">📋 Top Contact Reasons</div><span class="section-link" onclick="goToRaw('raw-agents')">Raw →</span></div>
+        ${fieldsSection}
+      </div>
+      <div>
+        <div class="section-header"><div class="section-title">🤖 Self-Service Flow Performance</div></div>
+        ${flowsSection}
+      </div>
+    </div>
+  `;
+}
+
+function renderTrends(){
+  const el=document.getElementById('trendsContent');
+  if(!state.weeks||!state.weeks.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No trend data yet</div><div class="empty-desc">Upload 2+ weeks of data to see trends.</div></div>`;return;}
+  const weeks=[...state.weeks].reverse();
+  el.innerHTML=`
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;font-weight:500">${weeks.length} week(s) loaded.</div>
+    <div class="table-card"><div class="table-wrap"><table>
+      <thead><tr><th>Week</th><th>Sales</th><th>Returns</th><th>Return Rate</th><th>SLA</th><th>Avg FRT</th><th>Avg Resolution</th><th>AI Rate</th><th>Flags</th></tr></thead>
+      <tbody>${weeks.map(w=>{
+        const s=w.shopify||{};const g=w.gorgias||{};const ai=w.ai||{};
+        const avgs=calcTeamAvgs(g.agents||[]);
+        const rr=s.weekSales>0?(s.weekReturns/s.weekSales*100):0;
+        const sla=parseFloat(g.slaAchievement||0);const air=parseFloat(ai.automationRate||0)*100;
+        const rrc=rr>20?'red':rr>15?'amber':'green';
+        const slac=sla>=80?'green':sla>=70?'amber':(sla>0?'red':'gray');
+        const aic=air>=40?'green':air>=30?'amber':(air>0?'red':'gray');
+        const frtc=avgs.avgFRTMins===null?'gray':avgs.avgFRTMins<=1440?'green':avgs.avgFRTMins<=2880?'amber':'red';
+        const flags=[];
+        if(rrc!=='green'&&rrc!=='gray')flags.push(badge((rrc==='red'?'🔴':'🟡')+' RR',rrc));
+        if(slac!=='green'&&slac!=='gray')flags.push(badge((slac==='red'?'🔴':'🟡')+' SLA',slac));
+        if(aic!=='green'&&aic!=='gray')flags.push(badge((aic==='red'?'🔴':'🟡')+' AI',aic));
+        if(frtc!=='green'&&frtc!=='gray')flags.push(badge((frtc==='red'?'🔴':'🟡')+' FRT',frtc));
+        return`<tr><td><strong>${w.label}</strong></td><td class="mono">$${((s.weekSales||0)/1000).toFixed(1)}K</td><td class="mono">$${((s.weekReturns||0)/1000).toFixed(1)}K</td><td>${badge(rr.toFixed(1)+'%',rrc)}</td><td>${sla>0?badge(sla.toFixed(1)+'%',slac):badge('—','gray')}</td><td>${badge(avgs.avgFRT,frtc)}</td><td>${badge(avgs.avgRes,'gray')}</td><td>${air>0?badge(air.toFixed(0)+'%',aic):badge('—','gray')}</td><td><div class="trend-flags">${flags.join('')||badge('✅ Clean','green')}</div></td></tr>`;
+      }).join('')}</tbody></table></div></div>
+    ${weeks.length>=2?`<div class="section-header" style="margin-top:24px"><div class="section-title">Pattern Alerts</div></div>${detectPatterns(weeks)}`:''}`;
+}
+function detectPatterns(weeks){
+  const alerts=[];
+  const hRR=weeks.filter(w=>w.shopify?.weekSales>0&&w.shopify.weekReturns/w.shopify.weekSales>0.15).length;
+  if(hRR>=2)alerts.push({level:'red',msg:`Return rate above 15% for ${hRR} week(s). Investigate sizing, promotions, or product issues.`});
+  const lSLA=weeks.filter(w=>{const s=parseFloat(w.gorgias?.slaAchievement||0);return s>0&&s<94;}).length;
+  if(lSLA>=2)alerts.push({level:'amber',msg:`SLA below 94% for ${lSLA} week(s). Review channel and agent coverage.`});
+  const lAI=weeks.filter(w=>parseFloat(w.ai?.automationRate||0)*100<40&&parseFloat(w.ai?.automationRate||0)>0).length;
+  if(lAI>=2)alerts.push({level:'amber',msg:`AI automation below 40% for ${lAI} week(s). Check if flows changed.`});
+  if(!alerts.length)return`<div class="no-data" style="color:var(--green);background:var(--green-light);border-color:var(--green-border)">✅ No repeated patterns flagged — metrics stable week-over-week.</div>`;
+  return alerts.map(a=>`<div style="padding:12px 16px;background:${a.level==='red'?'var(--red-light)':'var(--amber-light)'};border:1px solid ${a.level==='red'?'var(--red-border)':'var(--amber-border)'};border-radius:var(--radius);margin-bottom:8px;font-size:13px;color:${a.level==='red'?'var(--red)':'var(--amber)'}"><strong>${a.level==='red'?'🔴':'🟡'}</strong> ${a.msg}</div>`).join('');
+}
+
+// RAW DATA
+function goToRaw(tabId){
+  showPage('raw');
+  setTimeout(()=>{const btn=document.querySelector(`[onclick="showRawTab('${tabId}',this)"]`);if(btn)btn.click();},80);
+}
+function renderRaw(){
+  const el=document.getElementById('rawContent');
+  if(!state.currentWeek){el.innerHTML=`<div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-title">No data loaded</div></div>`;return;}
+  const tabs=[
+    {id:'raw-agents',label:'Agents',data:(state.currentWeek.gorgias||{}).agents||[]},
+    {id:'raw-channels',label:'Channels',data:(state.currentWeek.gorgias||{}).channels||[]},
+    {id:'raw-calls',label:'Phone',data:(state.currentWeek.gorgias||{}).calls||[]},
+    {id:'raw-usercalls',label:'Per-Agent Phone',data:(state.currentWeek.gorgias||{}).userCalls||[]},
+    {id:'raw-tags',label:'Tags',data:(state.currentWeek.gorgias||{}).tags||[]},
+    {id:'raw-auto',label:'Automation',data:(state.currentWeek.gorgias||{}).automate||[]},
+    {id:'raw-returns',label:'Returns',data:(state.currentWeek.aftership||{}).returnedProducts||[]},
+    {id:'raw-reasons',label:'Reasons',data:(state.currentWeek.aftership||{}).returnReasons||[]},
+    {id:'raw-warranty',label:'Warranties',data:(state.currentWeek.aftership||{}).warranty||[]},
+    {id:'raw-shopify',label:'Shopify',data:(state.currentWeek.shopify||{}).daily||[]},
+    {id:'raw-lowcsat',label:'Low CSAT',data:(state.currentWeek.gorgias||{}).lowCSAT||[]},
+    {id:'raw-csat',label:'CSAT Tickets',data:(state.currentWeek.gorgias||{}).csatTickets||[]},
+    {id:'raw-audit',label:'📋 Data Audit',data:null},
+    {id:'raw-csat',label:'CSAT Tickets',data:(state.currentWeek.gorgias||{}).csatTickets||[]},
+  ];
+  el.innerHTML=`
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;font-weight:500">All source data for <strong>${state.currentWeek.label}</strong>. Every number in this dashboard traces back to one of these tables.</div>
+    <div class="tab-bar">${tabs.map(t=>`<div class="tab" onclick="showRawTab('${t.id}',this)">${t.label}${t.data.length?` <span style="font-size:10px;background:var(--bg);padding:1px 5px;border-radius:10px;font-weight:600">${t.data.length}</span>`:''}</div>`).join('')}</div>
+    ${tabs.map((t,i)=>`<div id="${t.id}" ${i>0?'style="display:none"':''}><div class="table-card">${renderRawTable(t.data)}</div></div>`).join('')}
+  `;
+  el.querySelectorAll('.tab')[0].classList.add('active');
+}
+function renderAuditTrail(){
+  const audit=(state.currentWeek||{}).audit||[];
+  if(!audit.length)return'<div class="no-data">No audit trail yet. Upload files to start tracking data sources.</div>';
+  return'<div style="margin-bottom:14px"><div style="font-size:13px;font-weight:600;margin-bottom:4px">Data Sources — '+state.currentWeek.label+'</div><div style="font-size:12px;color:var(--text-muted)">Every number in this dashboard traces to one of these files. If something looks wrong, this tells you which file to check.</div></div>'+
+  audit.map(a=>'<div style="background:white;border:1px solid var(--border,#e5e8ec);border-radius:10px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px">'+
+    '<div style="width:8px;height:8px;border-radius:50%;background:#059669;flex-shrink:0;margin-top:4px"></div>'+
+    '<div><div style="font-size:13px;font-weight:600">'+a.filename+'</div>'+
+    '<div style="font-size:11px;color:var(--text-muted)">Uploaded '+a.timestamp+' · '+a.rows+' rows · '+a.type+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">'+(a.populated||[]).map(f=>'<span style="font-size:10px;background:rgba(76,170,206,.1);color:#4CAACE;border:1px solid rgba(76,170,206,.2);border-radius:10px;padding:1px 7px;font-weight:600">'+f+'</span>').join('')+'</div>'+
+    '</div></div>'
+  ).join('');
+}
+function showRawTab(id,el){
+  document.querySelectorAll('#rawContent .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#rawContent [id^="raw-"]').forEach(d=>d.style.display='none');
+  document.getElementById(id).style.display='block';el.classList.add('active');
+}
+function renderRawTable(data){
+  if(!data||!data.length)return`<div class="no-data">No data for this source.</div>`;
+  const keys=Object.keys(data[0]);
+  return`<div class="table-wrap"><table><thead><tr>${keys.map(k=>`<th>${k}</th>`).join('')}</tr></thead><tbody>${data.map(row=>`<tr>${keys.map(k=>`<td style="font-size:12px;white-space:nowrap">${row[k]||'—'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+// SEARCH
+function handleSearch(val){
+  const results=document.getElementById('searchResults');
+  if(!val||val.length<2){results.style.display='none';return;}
+  const v=val.toLowerCase();const items=[];
+  if(state.currentWeek){
+    ((state.currentWeek.gorgias||{}).agents||[]).filter(a=>matchAgent(a.Agent)&&String(a.Agent).toLowerCase().includes(v)).forEach(a=>{const n=matchAgent(a.Agent);items.push({type:'Agent',label:n,action:`openAgent('${n}')`});});
+    ((state.currentWeek.aftership||{}).returnedProducts||[]).filter(p=>String(p['Product title']||'').toLowerCase().includes(v)).slice(0,3).forEach(p=>{items.push({type:'Product',label:p['Product title'],action:`showPage('returns')`});});
+  }
+  state.weeks.filter(w=>String(w.label||'').toLowerCase().includes(v)).forEach(w=>{items.push({type:'Week',label:w.label,action:`selectWeek('${w.label}')`});});
+  if(!items.length){results.style.display='none';return;}
+  results.innerHTML=items.slice(0,8).map(i=>`<div class="search-result-item" onclick="${i.action};document.getElementById('globalSearch').value='';document.getElementById('searchResults').style.display='none'"><div class="sr-type">${i.type}</div>${i.label}</div>`).join('');
+  results.style.display='block';
+}
+function selectWeek(label){const w=state.weeks.find(w=>w.label===label);if(w){state.currentWeek=w;updateSidebarWeek();renderCurrentPage();}}
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))document.getElementById('searchResults').style.display='none';});
+
+// UPLOAD
+function checkWeekExists(){
+  const lbl=document.getElementById('weekLabel').value.trim();
+  const note=document.getElementById('weekExistsNote');
+  if(note)note.style.display=state.weeks.some(w=>w.label===lbl)?'block':'none';
+}
+function openUpload(){
+  document.getElementById('uploadModal').classList.add('open');
+  document.getElementById('uploadPassword').value='';
+  ['uploadSuccess','uploadError','progressWrap'].forEach(id=>document.getElementById(id).style.display='none');
+  uploadedFiles=[];renderFileList();
+}
+function closeUpload(){document.getElementById('uploadModal').classList.remove('open');}
+function handleDragOver(e){e.preventDefault();document.getElementById('dropZone').classList.add('dragover');}
+function handleDragLeave(){document.getElementById('dropZone').classList.remove('dragover');}
+function handleDrop(e){e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');handleFiles(e.dataTransfer.files);}
+function handleFiles(files){for(const f of files)uploadedFiles.push(f);renderFileList();}
+function clearFiles(){uploadedFiles=[];renderFileList();}
+function removeFile(i){uploadedFiles.splice(i,1);renderFileList();}
+function detectFileType(n){
+  n=n.toLowerCase();
+  if(n.endsWith('.zip'))return'ZIP';
+  if(n.includes('agent')&&n.includes('metric'))return'Gorgias Agents';
+  if(n.includes('overview')||(n.includes('okr')&&n.includes('trend')))return'Gorgias SLA Overview';
+  if(n.includes('ai')&&(n.includes('insight')||n.includes('trend')))return'Gorgias AI';
+  if(n.includes('automate')&&n.includes('impact'))return'Gorgias Automation Impact';
+  if(n.includes('automate')&&n.includes('feature'))return'Gorgias Automation by Feature';
+  if(n.includes('automate'))return'Gorgias Automation';
+  if(n.includes('channel'))return'Gorgias Channels';
+  if(n.includes('tag')&&!n.includes('ticket'))return'Gorgias Tags';
+  if(n.includes('low')&&n.includes('csat'))return'Low CSAT';
+  if(n.includes('global_call')||n.includes('global_kpi'))return'Aircall Global';
+  if(n.includes('user_kpi'))return'Aircall Per-Agent';
+  if(n.includes('return')&&n.includes('rate'))return'AfterShip Return Rate';
+  if(n.includes('return')&&n.includes('reason'))return'AfterShip Reasons';
+  if(n.includes('returned')&&n.includes('product'))return'AfterShip Products';
+  if(n.includes('warranty')&&n.includes('reason'))return'AfterShip Warranty Reasons';
+  if(n.includes('warranty'))return'AfterShip Warranty';
+  if(n.includes('refund'))return'Shopify Refunds';
+  if(n.includes('sales')&&!n.includes('variant'))return'Shopify Sales';
+  if(n.includes('variant'))return'⚠ Wrong Shopify Export — need Sales over time';
+  return'CSV';
+}
+function renderFileList(){
+  const wrap=document.getElementById('fileListWrap');const list=document.getElementById('fileList');const count=document.getElementById('fileCount');
+  if(!uploadedFiles.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  list.innerHTML=uploadedFiles.map((f,i)=>`<div class="file-item"><span>${f.name.endsWith('.zip')?'🗜️':'📄'}</span><span class="fi-name">${f.name}</span><span class="fi-type">${detectFileType(f.name)}</span><span class="fi-remove" onclick="removeFile(${i})">✕</span></div>`).join('');
+  count.innerHTML=`<span>${uploadedFiles.length}</span> file(s) queued. Drop more anytime.`;
+}
+function setProgress(pct,label){document.getElementById('progressWrap').style.display='block';document.getElementById('progressBar').style.width=pct+'%';document.getElementById('progressLabel').textContent=label;}
+
+async function processUpload(){
+  const pass=document.getElementById('uploadPassword').value;const weekLbl=document.getElementById('weekLabel').value.trim();
+  const errEl=document.getElementById('uploadError');const sucEl=document.getElementById('uploadSuccess');
+  errEl.style.display='none';sucEl.style.display='none';
+  if(pass!==PASS){errEl.textContent='❌ Incorrect password.';errEl.style.display='block';return;}
+  if(!weekLbl){errEl.textContent='❌ Please enter a week label.';errEl.style.display='block';return;}
+  if(!uploadedFiles.length){errEl.textContent='❌ No files added.';errEl.style.display='block';return;}
+  const btn=document.getElementById('uploadSubmit');btn.disabled=true;btn.textContent='Processing...';
+  try{
+    // MERGE: find existing week or create new
+    let wd=state.weeks.find(w=>w.label===weekLbl);
+    const isNew=!wd;
+    if(isNew)wd={label:weekLbl,gorgias:{},shopify:{},aftership:{},ai:{},concerns:[],kudos:[],audit:[]};
+    if(!wd.audit)wd.audit=[];
+    for(let i=0;i<uploadedFiles.length;i++){
+      const f=uploadedFiles[i];setProgress(Math.round((i/uploadedFiles.length)*80),`Processing ${f.name}...`);
+      if(f.name.toLowerCase().endsWith('.zip'))await processZip(f,wd);else await parseCSVFile(f,wd);
+    }
+    setProgress(88,'Running diagnostics & cleanup...');
+    const diagResult=deduplicateAndDiagnose(wd);
+    setProgress(94,'Building dashboard...');
+    buildDerivedData(wd);
+    setProgress(100,'Done!');
+    const okEl2=document.getElementById('uploadSuccess');
+    if(okEl2&&(diagResult.removals.length||diagResult.warnings.length)){
+      let msg='✅ Merged!';
+      if(diagResult.removals.length)msg+=' Cleaned: '+diagResult.removals.join(', ')+'.';
+      if(diagResult.warnings.length)msg+=' ⚠️ '+diagResult.warnings[0];
+      okEl2.textContent=msg;
+    } else if(okEl2){
+      okEl2.textContent='✅ Data merged successfully! Dashboard updating...';
+    }
+    if(isNew)state.weeks.unshift(wd);
+    state.currentWeek=wd;saveState();updateSidebarWeek();
+    if(okEl2){
+      okEl2.style.display='block';
+    }
+    setTimeout(()=>{closeUpload();renderCurrentPage();},1500);
+  }catch(e){errEl.textContent='❌ Error: '+e.message;errEl.style.display='block';console.error(e);}
+  btn.disabled=false;btn.textContent='Upload & Merge';
+}
+async function processZip(file,wd){
+  const buf=await file.arrayBuffer();const zip=await JSZip.loadAsync(buf);
+  const entries=Object.values(zip.files).filter(f=>!f.dir&&f.name.toLowerCase().endsWith('.csv'));
+  for(const e of entries){const text=await e.async('text');parseCSVText(text,e.name.split('/').pop(),wd);}
+}
+async function parseCSVFile(file,wd){const text=await file.text();parseCSVText(text,file.name,wd);}
+function parseCSVText(text,filename,wd){
+  let parsed;
+  try{parsed=Papa.parse(text,{header:true,skipEmptyLines:true}).data;}catch(e){return;}
+  if(!parsed||!parsed.length)return;
+  const n=filename.toLowerCase();
+  if(!wd.audit)wd.audit=[];
+  const _ts=new Date().toLocaleString();
+  const _pop=[];
+
+  if(n.includes('agent')&&n.includes('metric')){wd.gorgias.agents=parsed;_pop.push('Agent metrics','CSAT','FRT','Resolution','One-Touch');}
+  else if(n.includes('overview')||((n.includes('okr')||n.includes('sla'))&&n.includes('trend'))){
+    const map={};parsed.forEach(r=>{const k=Object.keys(r);if(k.length>=2)map[String(r[k[0]]).trim()]=r[k[1]];});
+    const ach=String(map['Achievement rate']||'0').replace('%','').trim();
+    wd.gorgias.slaAchievement=parseFloat(ach)||0;
+    wd.gorgias.slaBreaches=parseInt(String(map['Tickets with breached SLAs']||'0').replace(/,/g,''))||0;
+    if(map['One touch tickets'])wd.gorgias.slaOT=String(map['One touch tickets']);
+    if(map['First response time'])wd.gorgias.slaFRT=String(map['First response time']);
+    if(map['Resolution time'])wd.gorgias.slaResolution=String(map['Resolution time']);
+    _pop.push('SLA Achievement ('+ach+'%)','SLA Breaches','FRT','Resolution');
+  }
+  else if(n.includes('ai')&&(n.includes('insight')||n.includes('trend'))&&!n.includes('sla')&&!n.includes('low')){
+    const map={};parsed.forEach(r=>{const k=Object.keys(r);if(k.length>=3)map[String(r[k[0]]).trim()]={cur:r[k[1]],prev:r[k[2]]};});
+    wd.ai.automationRate=map['AI Agent automation rate']?.cur||'0';
+    wd.ai.interactions=map['AI Agent automated interactions']?.cur||'—';
+    wd.ai.prevInteractions=map['AI Agent automated interactions']?.prev||'—';
+    const cs=parseFloat(map['Cost saved']?.cur||0);const csp=parseFloat(map['Cost saved']?.prev||0);
+    wd.ai.costSaved='$'+(isNaN(cs)?0:cs).toLocaleString();
+    wd.ai.prevCostSaved='$'+(isNaN(csp)?0:csp).toLocaleString();
+    _pop.push('AI Rate','AI Interactions','Cost Saved');
+  }
+  else if(n.includes('automate-impact')||(n.includes('automate')&&n.includes('impact'))){
+    const map={};parsed.forEach(r=>{const k=Object.keys(r);if(k.length>=2)map[String(r[k[0]]).trim()]=r[k[1]];});
+    const rawRate=parseFloat(map['Automation rate']||0);
+    wd.ai.automationRate=rawRate>1?String(rawRate/100):String(rawRate);
+    wd.ai.automatedInteractions=String(map['Automated interactions']||'—').replace(/,/g,'');
+    wd.ai.interactions=wd.ai.automatedInteractions;
+    wd.ai.frtDecrease=map['Decrease in first response time']||'—';
+    wd.ai.rtDecrease=map['Decrease in resolution time']||'—';
+    _pop.push('AI Automation Rate ('+(rawRate*100).toFixed(1)+'%)','Automated interactions','FRT/RT decrease');
+  }
+  else if(n.includes('automate')&&!n.includes('impact')&&!n.includes('feature')&&!n.includes('interaction')){
+    const firstRow=parsed[0]||{};const keys=Object.keys(firstRow);
+    if(keys.includes('Automation rate')||keys.includes('Automated interactions')){
+      wd.gorgias.automate=parsed.map(r=>({date:String(Object.values(r)[0]).split('T')[0],'Automation rate':r['Automation rate']||0,'AI Agent':r['Automated interactions']||0}));
+    } else {
+      wd.gorgias.automate=parsed.map(r=>({date:String(Object.values(r)[0]).split('T')[0],'AI Agent':r['AI Agent']||0,'Flows':r['Flows']||0,'Track order':r['Track order']||0}));
+    }
+    _pop.push('Daily AI Activity');
+  }
+  else if(n.includes('channel')){wd.gorgias.channels=parsed;_pop.push('Channel metrics','Channel CSAT');}
+  else if(n.includes('tag')&&!n.includes('ticket')){wd.gorgias.tags=parsed;_pop.push('Ticket tags');}
+  else if(n.includes('trend')&&!n.includes('ai')){wd.gorgias.slaTrend=parsed;_pop.push('SLA trend');}
+  else if((n.includes('low')&&n.includes('csat'))||n.includes('granular')){wd.gorgias.lowCSAT=parsed;_pop.push('Miles Low CSAT ('+parsed.length+' tickets)');}
+  else if(n.includes('global_call')||n.includes('global_kpi')){wd.gorgias.calls=parsed;_pop.push('Phone call KPIs','Answer rate','Missed calls');}
+  else if(n.includes('user_kpi')){wd.gorgias.userCalls=parsed;_pop.push('Per-agent phone stats');}
+  else if(n.includes('csat')&&!n.includes('low')&&!n.includes('ai')&&!n.includes('insight')){wd.gorgias.csatTickets=parsed;_pop.push('CSAT tickets ('+parsed.length+')');}
+  else if(n.includes('ticket')&&!n.includes('field')&&!n.includes('csat')){wd.gorgias.ticketMessages=parsed;_pop.push('Ticket messages ('+parsed.length+')');}
+  else if(n.includes('ai-agent-performance')||((n.includes('agent'))&&n.includes('performance')&&!n.includes('metric'))){wd.gorgias.agents=parsed;_pop.push('Agent metrics','CSAT','FRT','Resolution','One-Touch');}
+  else if(n.includes('ai-agent-automated')){
+    if(!wd.ai.dailyAutomated)wd.ai.dailyAutomated=[];
+    wd.ai.dailyAutomated=parsed.map(r=>({date:String(Object.values(r)[0]).split('T')[0],count:parseInt(Object.values(r)[1]||0)}));
+    _pop.push('Daily automated tickets');
+  }
+  else if(n.includes('ai-agent-interactions')||n.includes('ai agent interactions')){
+    wd.ai.dailyInteractions=parsed.map(r=>({date:String(r['Dates within period']||'').split('T')[0],support:parseInt(r['AI Agent Support']||0),sales:parseInt(r['AI Agent Sales']||0)}));
+    _pop.push('AI daily support/sales interactions');
+  }
+  else if(n.includes('automate-impact')){
+    const map={};parsed.forEach(r=>{const k=Object.keys(r);if(k.length>=2)map[String(r[k[0]]).trim()]=r[k[1]];});
+    wd.ai.overallAutomationRate=parseFloat(map['Automation rate']||0);
+    wd.ai.automationRate=map['Automation rate']||'0';
+    wd.ai.automatedInteractions=map['Automated interactions']||'—';
+    wd.ai.frtDecrease=map['Decrease in first response time']||'—';
+    wd.ai.rtDecrease=map['Decrease in resolution time']||'—';
+    _pop.push('Automation impact','Overall rate','FRT/RT decrease');
+  }
+  else if(n.includes('automate-performance')&&!n.includes('feature')){
+    wd.gorgias.automate=parsed.map(r=>({date:String(Object.values(r)[0]).split('T')[0],'Automation rate':r['Automation rate']||0,'AI Agent':r['Automated interactions']||0}));
+    _pop.push('Daily automation performance');
+  }
+  else if(n.includes('automate-performance-feature')||n.includes('automate')&&n.includes('feature')){
+    wd.gorgias.automateFeature=parsed;
+    _pop.push('Automation by feature');
+  }
+  else if(n.includes('self-service')||n.includes('workflow')){
+    wd.gorgias.selfServiceFlows=parsed;
+    _pop.push('Self-service workflow performance');
+  }
+  else if(n.includes('ticket-field')||(n.includes('ticket')&&n.includes('field'))){
+    wd.gorgias.ticketFields=parsed;
+    _pop.push('Ticket fields ('+parsed.length+' rows)');
+  }
+  else if((n.includes('ticket')&&n.includes('export'))||(n.includes('tickets-')&&!n.includes('field'))){
+    // Full ticket export — rich source for themes, QA, channel breakdown
+    wd.gorgias.ticketExport=parsed;
+    // Pre-compute channel breakdown
+    const chBreak={};
+    parsed.forEach(t=>{const ch=t['Initial channel']||'other';if(!chBreak[ch])chBreak[ch]={channel:ch,count:0,frtSum:0,frtCount:0,resSum:0,resCount:0,csat:[],reasons:{}};
+      chBreak[ch].count++;
+      const frt=parseInt(t['First response time (s)']||0);if(frt>0){chBreak[ch].frtSum+=frt;chBreak[ch].frtCount++;}
+      const res=parseInt(t['Resolution time (s)']||0);if(res>0){chBreak[ch].resSum+=res;chBreak[ch].resCount++;}
+      const cs=parseFloat(t['Survey score']||0);if(cs>0)chBreak[ch].csat.push(cs);
+      const reason=String(t['Ticket Field: Reason']||'').trim();if(reason)chBreak[ch].reasons[reason]=(chBreak[ch].reasons[reason]||0)+1;
+    });
+    wd.gorgias.channelBreakdown=Object.values(chBreak).map(c=>({
+      channel:c.channel,count:c.count,
+      avgFRT:c.frtCount>0?Math.round(c.frtSum/c.frtCount):null,
+      avgRes:c.resCount>0?Math.round(c.resSum/c.resCount):null,
+      avgCSAT:c.csat.length>0?parseFloat((c.csat.reduce((a,b)=>a+b,0)/c.csat.length).toFixed(2)):null,
+      topReason:Object.entries(c.reasons).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—'
+    })).sort((a,b)=>b.count-a.count);
+    // Agent email per hour from ticket export
+    const agentEmailCounts={};
+    parsed.filter(t=>t['Initial channel']==='email'&&t['Assignee name']).forEach(t=>{const n=t['Assignee name'];agentEmailCounts[n]=(agentEmailCounts[n]||0)+1;});
+    wd.gorgias.agentEmailCounts=agentEmailCounts;
+    // CSAT snippets from ticket export
+    wd.gorgias.csatFromTickets=parsed.filter(t=>parseFloat(t['Survey score']||0)>=4).map(t=>({score:parseFloat(t['Survey score']),subject:t['Subject']||'',agent:t['Assignee name']||''})).slice(0,50);
+    _pop.push('Full ticket export ('+parsed.length+' tickets)','Channel breakdown','Agent email counts','CSAT snippets');
+  }
+  else if(n.includes('return')&&n.includes('reason')){wd.aftership.returnReasons=parsed;_pop.push('Return reasons');}
+  else if(n.includes('returned')&&n.includes('product')){wd.aftership.returnedProducts=parsed.filter(r=>r['SKU']&&r['SKU']!=='-');_pop.push('Returned products');}
+  else if(n.includes('warranty')&&n.includes('reason')){wd.aftership.warrantyReasons=parsed;_pop.push('Warranty reasons by claim type');}
+  else if(n.includes('warranty')){wd.aftership.warranty=parsed;_pop.push('Warranty claims');}
+  else if(n.includes('return')&&n.includes('rate')){
+    const rows=parsed.filter(r=>r['Order created date']&&r['Order created date']!=='Summary');
+    wd.aftership.returnRateOverTime=rows.map(r=>({date:r['Order created date'],orderReturnRate:parseFloat(String(r['Order return rate']||'0').replace('%','')),itemReturnRate:parseFloat(String(r['Item return rate']||'0').replace('%','')),ordersWithReturns:parseInt(String(r['Orders with returns']||'0').replace(/,/g,'')),totalOrders:parseInt(String(r['Total orders']||'0').replace(/,/g,''))}));
+    const summary=parsed.find(r=>String(r['Order created date']).toLowerCase()==='summary');
+    if(summary){wd.aftership.returnRateSummary={orderReturnRate:parseFloat(String(summary['Order return rate']||'0').replace('%','')),itemReturnRate:parseFloat(String(summary['Item return rate']||'0').replace('%','')),totalReturns:parseInt(String(summary['Orders with returns']||'0').replace(/,/g,'')),totalOrders:parseInt(String(summary['Total orders']||'0').replace(/,/g,''))};}
+    _pop.push('Return rate over time','Order return rate','Item return rate');
+  }
+  else if(n.includes('refund')){wd.shopify.refundRows=parsed;_pop.push('Shopify refunds');}
+  else if(n.includes('sales')){wd.shopify.salesRows=parsed;_pop.push('Shopify sales');}
+  else{_pop.push('Parsed ('+parsed.length+' rows)');}
+
+  if(_pop.length){wd.audit.push({filename,timestamp:_ts,rows:parsed.length,type:detectFileType(filename),populated:_pop});}
+}
+
+function deduplicateAndDiagnose(wd){
+  const warnings=[];const removals=[];
+
+  // 1. Deduplicate agents — keep one row per agent name
+  if(wd.gorgias&&wd.gorgias.agents&&wd.gorgias.agents.length){
+    const seen=new Set();const before=wd.gorgias.agents.length;
+    wd.gorgias.agents=wd.gorgias.agents.filter(a=>{
+      const key=String(a.Agent||'').toLowerCase().trim();
+      if(seen.has(key))return false;seen.add(key);return true;
+    });
+    const removed=before-wd.gorgias.agents.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate agent row(s)');
+    // Sanity check — warn if very few roster agents found
+    const rosterCount=wd.gorgias.agents.filter(a=>matchAgent(a.Agent)).length;
+    if(rosterCount<5&&wd.gorgias.agents.length>2)warnings.push('Only '+rosterCount+' roster agents found in agent metrics — check that you exported the right date range');
+  }
+
+  // 2. Deduplicate Shopify sales by date — keep last occurrence
+  if(wd.shopify&&wd.shopify.salesRows&&wd.shopify.salesRows.length){
+    const map={};wd.shopify.salesRows.forEach(r=>{const d=r['Day']||r['date'];if(d)map[d]=r;});
+    const before=wd.shopify.salesRows.length;
+    wd.shopify.salesRows=Object.values(map);
+    const removed=before-wd.shopify.salesRows.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate Shopify sales date(s)');
+  }
+
+  // 3. Deduplicate Shopify refunds by date
+  if(wd.shopify&&wd.shopify.refundRows&&wd.shopify.refundRows.length){
+    const map={};wd.shopify.refundRows.forEach(r=>{const d=r['Day']||r['date'];if(d)map[d]=r;});
+    const before=wd.shopify.refundRows.length;
+    wd.shopify.refundRows=Object.values(map);
+    const removed=before-wd.shopify.refundRows.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate Shopify refund date(s)');
+  }
+
+  // 4. Deduplicate AfterShip returned products by SKU
+  if(wd.aftership&&wd.aftership.returnedProducts&&wd.aftership.returnedProducts.length){
+    const seen=new Set();const before=wd.aftership.returnedProducts.length;
+    wd.aftership.returnedProducts=wd.aftership.returnedProducts.filter(p=>{
+      const key=(p['SKU']||p['Product title']||'').trim();
+      if(seen.has(key))return false;seen.add(key);return true;
+    });
+    const removed=before-wd.aftership.returnedProducts.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate return product row(s)');
+  }
+
+  // 5. Deduplicate phone call rows by date
+  if(wd.gorgias&&wd.gorgias.calls&&wd.gorgias.calls.length){
+    const seen=new Set();const before=wd.gorgias.calls.length;
+    wd.gorgias.calls=wd.gorgias.calls.filter(c=>{
+      const key=String(c['daily breakdown']||'').split(' ')[0];
+      if(seen.has(key))return false;seen.add(key);return true;
+    });
+    const removed=before-wd.gorgias.calls.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate phone call date(s)');
+  }
+
+  // 6. Deduplicate per-agent phone rows by user
+  if(wd.gorgias&&wd.gorgias.userCalls&&wd.gorgias.userCalls.length){
+    const seen=new Set();const before=wd.gorgias.userCalls.length;
+    wd.gorgias.userCalls=wd.gorgias.userCalls.filter(u=>{
+      const key=String(u.user||'').toLowerCase().trim();
+      if(seen.has(key))return false;seen.add(key);return true;
+    });
+    const removed=before-wd.gorgias.userCalls.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate phone user row(s)');
+  }
+
+  // 7. Deduplicate tags by tag name
+  if(wd.gorgias&&wd.gorgias.tags&&wd.gorgias.tags.length){
+    const seen=new Set();const before=wd.gorgias.tags.length;
+    wd.gorgias.tags=wd.gorgias.tags.filter(t=>{
+      const key=String(t.tag||'').toLowerCase().trim();
+      if(seen.has(key))return false;seen.add(key);return true;
+    });
+    const removed=before-wd.gorgias.tags.length;
+    if(removed>0)removals.push('Removed '+removed+' duplicate tag row(s)');
+  }
+
+  // 8. Check for duplicate file uploads (same filename already in audit)
+  if(wd.audit&&wd.audit.length>1){
+    const fileCounts={};
+    wd.audit.forEach(a=>{fileCounts[a.filename]=(fileCounts[a.filename]||0)+1;});
+    Object.entries(fileCounts).forEach(([fname,count])=>{
+      if(count>1)warnings.push(fname+' was uploaded '+count+'x — keeping latest data, duplicates removed');
+    });
+    // Deduplicate audit entries too - keep latest per filename
+    const auditMap={};
+    wd.audit.forEach(a=>{auditMap[a.filename]=a;});
+    wd.audit=Object.values(auditMap);
+  }
+
+  // 9. Sales sanity check — warn if week total looks way off vs prior week
+  if(wd.shopify&&wd.shopify.salesRows){
+    const total=wd.shopify.salesRows.reduce((s,r)=>s+parseFloat(r['Total sales']||0),0);
+    if(total>0&&state.weeks.length>0){
+      const prior=state.weeks[0].shopify?.weekSales||0;
+      if(prior>0){
+        const ratio=total/prior;
+        if(ratio>3)warnings.push('Sales total ($'+Math.round(total/1000)+'K) is '+ratio.toFixed(1)+'x higher than prior week — check that you exported the correct date range');
+        if(ratio<0.2)warnings.push('Sales total ($'+Math.round(total/1000)+'K) is much lower than prior week ($'+Math.round(prior/1000)+'K) — check date range');
+      }
+    }
+  }
+
+  // Store diagnostics in audit trail
+  if((removals.length||warnings.length)&&wd.audit){
+    if(removals.length)wd.audit.push({filename:'🧹 Auto-cleanup',timestamp:new Date().toLocaleString(),rows:0,type:'Deduplication',populated:removals});
+    if(warnings.length)wd.audit.push({filename:'⚠️ Data warnings',timestamp:new Date().toLocaleString(),rows:0,type:'Diagnostic',populated:warnings});
+  }
+
+  return{warnings,removals};
+}
+
+function buildDerivedData(w){
+  const salesRows=w.shopify.salesRows||[];const refundRows=w.shopify.refundRows||[];
+  const salesMap={};salesRows.forEach(r=>{const d=r['Day']||r['date'];if(d)salesMap[d]=parseFloat(r['Total sales']||0);});
+  const refundMap={};refundRows.forEach(r=>{const d=r['Day']||r['date'];if(d)refundMap[d]=Math.abs(parseFloat(r['Returns']||r['Refund']||0));});
+  const allDates=[...new Set([...Object.keys(salesMap),...Object.keys(refundMap)])].sort();
+  w.shopify.daily=allDates.map(d=>({date:d,sales:salesMap[d]||0,returns:refundMap[d]||0,returnRate:salesMap[d]>0?((refundMap[d]||0)/salesMap[d]*100).toFixed(2):'0'}));
+  w.shopify.weekSales=Object.values(salesMap).reduce((a,b)=>a+b,0);
+  w.shopify.weekReturns=Object.values(refundMap).reduce((a,b)=>a+b,0);
+  const marchDates=allDates.filter(d=>d.includes('-03-')||d.startsWith('03/'));
+  w.shopify.marchSales=marchDates.reduce((s,d)=>s+(salesMap[d]||0),0);
+  w.shopify.marchReturns=marchDates.reduce((s,d)=>s+(refundMap[d]||0),0);
+
+  // CONCERNS
+  const concerns=[];
+  const rr=w.shopify.weekSales>0?w.shopify.weekReturns/w.shopify.weekSales*100:0;
+  if(rr>20)concerns.push({level:'red',shortTitle:`Return Rate ${rr.toFixed(1)}% — Above Target`,detail:`Well above 15% target.<br><br><strong>How to troubleshoot:</strong><br>1. Go to Returns & Warranties → Top Returned Products<br>2. Look for any product with >30% return rate — that's your culprit<br>3. Check the Return Reasons table — if "Sizing" is the top reason, review sizing guidance on product pages<br>4. Check if a promotion ran this week that might have driven impulse purchases`,page:'returns',rawTab:'raw-shopify'});
+  else if(rr>15)concerns.push({level:'amber',shortTitle:`Return Rate ${rr.toFixed(1)}% — Watch`,detail:`Above 15% target. Monitor next week.<br><br><strong>Quick check:</strong> Go to Returns & Warranties and look for any single product driving the increase.`,page:'returns'});
+  const sla=w.gorgias.slaAchievement||0;
+  if(sla>0&&sla<70)concerns.push({level:'red',shortTitle:`SLA ${sla.toFixed(1)}% — Below Target`,detail:`Well below 80% target.<br><br><strong>How to troubleshoot:</strong><br>1. Go to Team Performance → check which agents have FRT above their channel target<br>2. In Gorgias: Reports → SLA → filter by Breached → sort by Agent to find who's driving it<br>3. Check if a volume spike happened (high ticket day) that caught the team short-staffed<br>4. Review channel breakdown — email breaches are different from chat breaches`,page:'team'});
+  else if(sla>0&&sla<80)concerns.push({level:'amber',shortTitle:`SLA ${sla.toFixed(1)}% — Watch`,detail:`Just below 80% target.<br><br><strong>Quick check:</strong> In Gorgias go to Reports → SLA → filter by Breached. Look for a pattern in channel or time of day.`,page:'team'});
+  const air=parseFloat(w.ai.automationRate||0)*100;
+  if(air>0&&air<30)concerns.push({level:'red',shortTitle:`AI Rate ${air.toFixed(0)}% — Major Drop`,detail:`Far below 40% target.<br><br><strong>How to troubleshoot:</strong><br>1. In Gorgias: Settings → AI Agent → check if Miles is still active and flows are enabled<br>2. Check the Automation Daily table — if Sat/Sun show 0, that's expected (weekend); weekday 0s are a problem<br>3. Look at the Low CSAT tickets on the AI tab — if Miles is auto-closing complex tickets, Gorgias may have auto-paused him<br>4. Check if any routing rules changed that might be bypassing Miles`,page:'ai'});
+  else if(air>0&&air<40)concerns.push({level:'amber',shortTitle:`AI Rate ${air.toFixed(0)}% — Below Target`,detail:`Below 40% target.<br><br><strong>Quick check:</strong> Go to AI & Gorgias → check Daily AI Activity. If interactions dropped mid-week, something changed. Check Gorgias Settings → Automations.`,page:'ai'});
+  (w.gorgias.agents||[]).forEach(a=>{
+    const name=matchAgent(a.Agent);if(!name)return;
+    const frt=String(a['First response time']||'');const res=String(a['Resolution time']||'');
+    if(frt.includes('mo')||(frt.includes('d')&&parseInt(frt)>=7))concerns.push({level:'red',shortTitle:`${name} — FRT: ${frt}`,detail:`Response time critically high (${frt}).<br><br><strong>How to troubleshoot:</strong><br>1. Click "${name}'s profile" below → review their current metrics<br>2. In Gorgias: go to Tickets → filter by Assignee: ${name} → sort by Oldest first<br>3. Look for tickets sitting open/unread — especially any tagged RETURN, WARRANTY, or ESCALATION<br>4. Check if ${name} had scheduled time off this week that caused a backlog<br>5. If tickets are old and stale, bulk-close resolved ones before your next 1:1`,agentName:name,page:'team',rawTab:'raw-agents'});
+    else if(frt.includes('d')&&parseInt(frt)>=2)concerns.push({level:'amber',shortTitle:`${name} — FRT: ${frt}`,detail:`First response above target (${frt}).<br><br><strong>Quick check:</strong> In Gorgias filter tickets by ${name}, sort oldest first. Are there specific ticket types or channels piling up?`,agentName:name,page:'team'});
+    if(res.includes('mo'))concerns.push({level:'red',shortTitle:`${name} — Resolution: ${res}`,detail:`Resolution time over 1 month.<br><br><strong>How to troubleshoot:</strong><br>1. In Gorgias: Tickets → filter by ${name} → filter Status: Open → sort by Created Date oldest first<br>2. These are likely stuck tickets — review each one and determine: resolve, escalate, or close<br>3. Check if any are waiting on customer response that were never followed up<br>4. Bring the list to your next 1:1 with ${name} — work through it together`,agentName:name,page:'team',rawTab:'raw-agents'});
+  });
+  (w.gorgias.channels||[]).forEach(c=>{
+    const ch=c.Channel||'';const frt=String(c['First response time']||'');
+    if((ch==='facebook'||ch.includes('instagram'))&&frt.includes('d')&&parseInt(frt)>=1)concerns.push({level:'red',shortTitle:`${ch} — FRT: ${frt}`,detail:`Target is 10 min. Social response is ${frt} — critically above target.<br><br><strong>How to troubleshoot:</strong><br>1. In Gorgias: Tickets → filter Channel: ${ch} → sort by Oldest first<br>2. Check who is assigned to social — if no one is, that's the root cause<br>3. Verify that social tickets are included in your team's SLA policy in Gorgias Settings → SLA<br>4. Consider assigning a specific agent to monitor social daily — even 10 min/day would fix this`,page:'team',rawTab:'raw-channels'});
+  });
+  w.concerns=concerns;
+
+  // KUDOS — computed dynamically in renderKudosCards now
+  w.kudos=[{name:'computed'}]; // placeholder so renderKudosCards runs
+}
+
+// INIT
+loadState();updateSidebarWeek();if(state.currentWeek)renderCurrentPage();
+</script>
+</body>
+</html>
